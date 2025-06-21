@@ -27,9 +27,6 @@ def get_table(damages: list[float], drop: list[float], rate: float, name: str) -
   def to_str(values: list[float]) -> list[str]:
     return [f"{v:.1f}" for v in values]
 
-  def line(left: str, join: str, right: str) -> str:
-    return left + join.join(h * (w + 2) for w in widths) + right
-
   title = f"TTK for {name}" if name else "TTK Calculator"
   field_names = ["TTK (ms)"] + [f"{d}x" for d in drop]
   rows = [[p] + to_str(r) for p, r in zip(bodyparts, get_ttk(damages, drop, rate))]
@@ -38,6 +35,9 @@ def get_table(damages: list[float], drop: list[float], rate: float, name: str) -
   for row in rows:
     for i, cell in enumerate(row):
       widths[i] = max(widths[i], len(cell))
+
+  def line(left: str, join: str, right: str) -> str:
+    return left + join.join(h * (w + 2) for w in widths) + right
 
   middle_line = line(lj, mj, rj)
   return "\n".join(
