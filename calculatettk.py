@@ -40,15 +40,13 @@ def get_table(damages: list[float], drop: list[float], rate: float, name: str) -
     return left + join.join(h * (w + 2) for w in widths) + right
 
   middle_line = line(lj, mj, rj)
-  return "\n".join(
-    [line(tl, h, tr)]
+  return "\n".join([line(tl, h, tr)]
     + [v + title.center(sum(widths) + 3 * len(widths) - 1) + v]
     + [line(lj, tj, rj)]
     + [item for i, row in enumerate([field_names] + rows) for item in (
         [v + "".join(f" {c.ljust(w)} {v}" for c, w in zip(row, widths))]
         + ([middle_line] if i < len(rows) else []))]
-    + [line(bl, bj, br)]
-  )
+    + [line(bl, bj, br)])
 
 ############################
 ###    MAIN INTERFACE    ###
