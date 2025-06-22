@@ -39,13 +39,13 @@ def get_table(damages: list[float], drop: list[float], rate: float, name: str) -
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(h * (w + 2) for w in widths) + right
 
-  middle_line = line(lj, mj, rj)
+  middle_line, len_rows = line(lj, mj, rj), len(rows)
   return "\n".join([line(tl, h, tr)]
     + [v + title.center(sum(widths) + 3 * len(widths) - 1) + v]
     + [line(lj, tj, rj)]
-    + [item for i, row in enumerate([field_names] + rows) for item in (
-        [v + "".join(f" {c.ljust(w)} {v}" for c, w in zip(row, widths))]
-        + ([middle_line] if i < len(rows) else []))]
+    + [item for i, row in enumerate([field_names] + rows) for item in
+        ["".join(f"{v} {c.ljust(w)} " for c, w in zip(row, widths)) + v]
+        + ([middle_line] if i < len_rows else [])]
     + [line(bl, bj, br)])
 
 ############################
@@ -61,13 +61,11 @@ def main_interface(root: Tk) -> None:
   frame2 = Frame(root, padding = "0 5 5 5")
   frame2.grid(row = 0, column = 1)
 
-  damages_entries: list[Entry] = []
+  damages_entries = [Entry(frame1, width = 10) for e in bodyparts]
   for row, row_text in enumerate(bodyparts):
     row_text = f"Damage value for {row_text}:"
     Label(frame1, text = row_text).grid(row = row, column = 0)
-    entry = Entry(frame1, width = 10)
-    entry.grid(row = row, column = 1)
-    damages_entries.append(entry)
+    damages_entries[row].grid(row = row, column = 1)
 
   row = len(bodyparts)
   drop_text = "Damage drops (space separated):"
