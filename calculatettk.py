@@ -24,26 +24,20 @@ def get_table(damages: list[float], drop: list[float], rate: float, name: str) -
   h, v, tl, tr, bl, br = "═", "║", "╔", "╗", "╚", "╝"
   tj, bj, lj, rj, mj = "╦", "╩", "╠", "╣", "╬"
 
-  def to_str(values: list[float]) -> list[str]:
-    return [f"{v:.1f}" for v in values]
-
   title = f"TTK for {name}" if name else "TTK Calculator"
-  field_names = ["TTK (ms)"] + [f"{d}x" for d in drop]
-  rows = [[p] + to_str(r) for p, r in zip(bodyparts, get_ttk(damages, drop, rate))]
+  rows = [["TTK (ms)"] + [f"{d}x" for d in drop]] + [[p] + [f"{v:.1f}" for v in r]
+    for p, r in zip(bodyparts, get_ttk(damages, drop, rate))]
 
-  widths = [len(f) for f in field_names]
-  for row in rows:
-    for i, cell in enumerate(row):
-      widths[i] = max(widths[i], len(cell))
+  widths = [max(len(v) for v in col) for col in zip(*rows)]
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(h * (w + 2) for w in widths) + right
 
-  middle_line, len_rows = line(lj, mj, rj), len(rows)
+  middle_line, len_rows = line(lj, mj, rj), (len(rows) - 1)
   return "\n".join([line(tl, h, tr)]
     + [v + title.center(sum(widths) + 3 * len(widths) - 1) + v]
     + [line(lj, tj, rj)]
-    + [item for i, row in enumerate([field_names] + rows) for item in
+    + [item for i, row in enumerate(rows) for item in
         ["".join(f"{v} {c.ljust(w)} " for c, w in zip(row, widths)) + v]
         + ([middle_line] if i < len_rows else [])]
     + [line(bl, bj, br)])
