@@ -1,7 +1,7 @@
 from tkinter.ttk import Frame, Label, Entry, Button
 from tkinter.scrolledtext import ScrolledText
-from math import ceil as top
 from tkinter import Tk
+from math import ceil
 
 ############################
 ###    TTK CALCULATOR    ###
@@ -9,38 +9,39 @@ from tkinter import Tk
 
 bodyparts = ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
 
-def get_ttk(damages: list[float], drop: list[float], rate: float) -> list[list[float]]:
+def get_ttk(damages: list[float], drops: list[float], rate: float) -> list[list[float]]:
   if len(damages) != len(bodyparts): raise ValueError("Damages must contain 7 numbers.")
   if not all(d > 0 for d in damages): raise ValueError("Damages must be positive.")
-  if not all(0 < d <= 1 for d in drop): raise ValueError("Drops must be in (0, 1].")
+  if not all(0 < d <= 1 for d in drops): raise ValueError("Drops must be in (0, 1].")
   if not (rate > 0): raise ValueError("Fire rate must be positive.")
-  return [[(60000 / rate) * (top(100 / d / n) - 1) for n in drop] for d in damages]
+  return [[(60000 / rate) * (ceil(100 / d / n) - 1) for n in drops] for d in damages]
 
 ############################
 ###   TABLE GENERATION   ###
 ############################
 
-def get_table(damages: list[float], drop: list[float], rate: float, name: str) -> str:
-  h, v, tl, tr, bl, br = "═", "║", "╔", "╗", "╚", "╝"
-  tj, bj, lj, rj, mj = "╦", "╩", "╠", "╣", "╬"
+def get_table(damages: list[float], drops: list[float], rate: float, name: str) -> str:
+  hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
+  tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
 
-  title = f"TTK for {name}" if name else "TTK Calculator"
-  rows = [["TTK (ms)"] + [f"{d}x" for d in drop]] + [[p] + [f"{v:.1f}" for v in r]
-    for p, r in zip(bodyparts, get_ttk(damages, drop, rate))]
-
-  widths = [max(len(v) for v in col) for col in zip(*rows)]
+  rows = ([["TTK (ms)"] + [f"{drop}x" for drop in drops]] +
+    [[part] + [f"{ttk:.1f}" for ttk in ttks] for part, ttks
+      in zip(bodyparts, get_ttk(damages, drops, rate))])
+  widths = [max(len(value) for value in column) for column in zip(*rows)]
 
   def line(left: str, join: str, right: str) -> str:
-    return left + join.join(h * (w + 2) for w in widths) + right
+    return left + join.join(hor * (w + 2) for w in widths) + right
 
-  middle_line, len_rows = line(lj, mj, rj), (len(rows) - 1)
-  return "\n".join([line(tl, h, tr)]
-    + [v + title.center(sum(widths) + 3 * len(widths) - 1) + v]
-    + [line(lj, tj, rj)]
+  title = f"TTK for {name}" if name else "TTK Calculator"
+  middle_line, len_rows = line(ljoin, mjoin, rjoin), (len(rows) - 1)
+
+  return "\n".join([line(tleft, hor, tright)]
+    + [ver + title.center(sum(widths) + 3 * len(widths) - 1) + ver]
+    + [line(ljoin, tjoin, rjoin)]
     + [item for i, row in enumerate(rows) for item in
-        ["".join(f"{v} {c.ljust(w)} " for c, w in zip(row, widths)) + v]
-        + ([middle_line] if i < len_rows else [])]
-    + [line(bl, bj, br)])
+      ["".join(f"{ver} {c.ljust(w)} " for c, w in zip(row, widths)) + ver]
+      + ([middle_line] if i < len_rows else [])]
+    + [line(bleft, bjoin, bright)])
 
 ############################
 ###    MAIN INTERFACE    ###
