@@ -1,6 +1,5 @@
-from tkinter.ttk import Frame, Label, Entry, Button
+from tkinter import Frame, Label, Entry, Button, Tk
 from tkinter.scrolledtext import ScrolledText
-from tkinter import Tk
 from math import ceil
 
 ############################
@@ -24,8 +23,8 @@ def get_table(damages: list[float], drops: list[float], rate: float, name: str) 
   hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
 
-  rows = ([["TTK (ms)"] + [f"{drop}x" for drop in drops]] +
-    [[part] + [f"{ttk:.1f}" for ttk in ttks] for part, ttks
+  rows = ([["TTK (ms)"] + [f"{drop}x" for drop in drops]]
+    + [[part] + [f"{ttk:.1f}" for ttk in ttks] for part, ttks
       in zip(bodyparts, get_ttk(damages, drops, rate))])
   widths = [max(len(value) for value in column) for column in zip(*rows)]
 
@@ -51,16 +50,15 @@ def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
   root.resizable(False, False)
 
-  frame1 = Frame(root, padding = "5 5 5 5")
-  frame1.grid(row = 0, column = 0)
-  frame2 = Frame(root, padding = "0 5 5 5")
-  frame2.grid(row = 0, column = 1)
+  frame1, frame2 = Frame(root), Frame(root)
+  frame1.grid(row = 0, column = 0, padx = "5 5", pady = "5 5")
+  frame2.grid(row = 0, column = 1, padx = "0 5", pady = "5 5")
 
-  damages_entries = [Entry(frame1, width = 10) for e in bodyparts]
+  damages_entry = [Entry(frame1, width = 10) for e in bodyparts]
   for row, row_text in enumerate(bodyparts):
     row_text = f"Damage value for {row_text}:"
     Label(frame1, text = row_text).grid(row = row, column = 0)
-    damages_entries[row].grid(row = row, column = 1)
+    damages_entry[row].grid(row = row, column = 1)
 
   row = len(bodyparts)
   drop_text = "Damage drops (space separated):"
@@ -97,19 +95,20 @@ def main_interface(root: Tk) -> None:
 
   def calculate():
     try:
-      damage_values = [float(e.get()) for e in damages_entries]
-      drop_values = [float(e) for e in drop_entry.get().split()]
-      rate_value, name_value = float(rate_entry.get()), name_entry.get().strip()
-      show_results(get_table(damage_values, drop_values, rate_value, name_value))
-    except Exception as e: show_results(f"Error: {e!s}")
+      damages = [float(e.get()) for e in damages_entry]
+      drops = [float(e) for e in drop_entry.get().split()]
+      rate, name = float(rate_entry.get()), name_entry.get()
+      show_results(get_table(damages, drops, rate, name))
+    except Exception as e:
+      show_results(f"An internal error occurred: {e!s}")
 
   def focus_next(widget: Entry | Button):
     elem = widget.tk_focusNext()
     if elem: elem.focus_set()
     return "break"
 
-  damages_entries[0].focus_set()
-  for entry in damages_entries + [drop_entry, rate_entry, name_entry]:
+  damages_entry[0].focus_set()
+  for entry in damages_entry + [drop_entry, rate_entry, name_entry]:
     entry.bind("<Return>", lambda x: focus_next(x.widget))
 
   calcbtn = Button(root, text = "Calculate", command = calculate)
