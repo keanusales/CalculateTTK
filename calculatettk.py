@@ -1,5 +1,5 @@
-from tkinter import Frame, Label, Entry, Button, Tk
-from tkinter.scrolledtext import ScrolledText
+from tkinter.ttk import Frame, Label, Entry, Button
+from tkinter import Text, Tk
 from math import ceil
 
 ############################
@@ -50,9 +50,10 @@ def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
   root.resizable(False, False)
 
-  frame1, frame2 = Frame(root), Frame(root)
-  frame1.grid(row = 0, column = 0, padx = "5 5", pady = "5 5")
-  frame2.grid(row = 0, column = 1, padx = "0 5", pady = "5 5")
+  frame1 = Frame(root, padding = "5 5 5 5")
+  frame1.grid(row = 0, column = 0)
+  frame2 = Frame(root, padding = "0 5 5 5")
+  frame2.grid(row = 0, column = 1)
 
   damages_entry = [Entry(frame1, width = 10) for e in bodyparts]
   for row, row_text in enumerate(bodyparts):
@@ -78,7 +79,7 @@ def main_interface(root: Tk) -> None:
   name_entry = Entry(frame1, width = 10)
   name_entry.grid(row = row, column = 1)
 
-  result_text = ScrolledText(frame2, width = 55, height = 20)
+  result_text = Text(frame2, width = 55, height = 20)
   result_text.pack(padx = 10, pady = 10)
   result_text.config(state = "disabled")
 
