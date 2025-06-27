@@ -55,7 +55,7 @@ def main_interface(root: Tk) -> None:
   frame2 = Frame(root, padding = "0 5 5 5")
   frame2.grid(row = 0, column = 1)
 
-  damages_entry = [Entry(frame1, width = 10) for e in bodyparts]
+  damages_entry = [Entry(frame1, width = 15) for e in bodyparts]
   for row, row_text in enumerate(bodyparts):
     row_text = f"Damage value for {row_text}:"
     Label(frame1, text = row_text).grid(row = row, column = 0)
@@ -64,22 +64,22 @@ def main_interface(root: Tk) -> None:
   row = len(bodyparts)
   drop_text = "Damage drops (space separated):"
   Label(frame1, text = drop_text).grid(row = row, column = 0)
-  drop_entry = Entry(frame1, width = 20)
+  drop_entry = Entry(frame1, width = 15)
   drop_entry.grid(row = row, column = 1)
 
   row += 1
   rate_text = "Weapon fire rate (shots per minute):"
   Label(frame1, text = rate_text).grid(row = row, column = 0)
-  rate_entry = Entry(frame1, width = 10)
+  rate_entry = Entry(frame1, width = 15)
   rate_entry.grid(row = row, column = 1)
 
   row += 1
   name_text = "Weapon name (optional):"
   Label(frame1, text = name_text).grid(row = row, column = 0)
-  name_entry = Entry(frame1, width = 10)
+  name_entry = Entry(frame1, width = 15)
   name_entry.grid(row = row, column = 1)
 
-  result_text = Text(frame2, width = 55, height = 20)
+  result_text = Text(frame2, width = 52, height = 19)
   result_text.pack(padx = 10, pady = 10)
   result_text.config(state = "disabled")
 
@@ -113,7 +113,7 @@ def main_interface(root: Tk) -> None:
     entry.bind("<Return>", lambda x: focus_next(x.widget))
 
   calcbtn = Button(root, text = "Calculate", command = calculate)
-  calcbtn.grid(row = 1, column = 0, columnspan = 2, pady = (0, 10))
+  calcbtn.grid(row = 1, column = 0, columnspan = 2, pady = "0 10")
   calcbtn.bind("<Return>", lambda x: (focus_next(x.widget), calculate()))
 
   root.mainloop()
