@@ -9,21 +9,20 @@ from math import ceil
 bodyparts = ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
 
 def get_ttk(damages: list[float], drops: list[float], rate: float) -> list[list[float]]:
-  if len(damages) != len(bodyparts): raise ValueError("Damages must contain 7 numbers.")
-  if not all(d > 0 for d in damages): raise ValueError("Damages must be positive.")
-  if not all(0 < d <= 1 for d in drops): raise ValueError("Drops must be in (0, 1].")
-  if not (rate > 0): raise ValueError("Fire rate must be positive.")
+  if (len(damages) < len(bodyparts) or not all(d > 0 for d in damages)
+    or not drops or not all(0 < d <= 1 for d in drops) or not (rate > 0)):
+      raise ValueError("Theres an invalid input. Ensure the values are correct.")
   return [[(60000 / rate) * (ceil(100 / d / n) - 1) for n in drops] for d in damages]
 
 ############################
 ###   TABLE GENERATION   ###
 ############################
 
-def get_table(damages: list[float], drops: list[float], rate: float, name: str) -> str:
+def get_table(damages: list[float], drops: list[float], rate: float) -> tuple[str, int]:
   hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
 
-  rows = ([["TTK (ms)"] + [f"{drop}x" for drop in drops]]
+  rows = ([["Part/Drop"] + [f"{drop}x" for drop in drops]]
     + [[part] + [f"{ttk:.1f}" for ttk in ttks] for part, ttks
       in zip(bodyparts, get_ttk(damages, drops, rate))])
   widths = [max(len(value) for value in column) for column in zip(*rows)]
@@ -31,16 +30,18 @@ def get_table(damages: list[float], drops: list[float], rate: float, name: str) 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (w + 2) for w in widths) + right
 
-  title = f"TTK for {name}" if name else "TTK Calculator"
+  max_width = sum(widths) + 3 * len(widths) + 1
   middle_line, len_rows = line(ljoin, mjoin, rjoin), (len(rows) - 1)
 
-  return "\n".join([line(tleft, hor, tright)]
-    + [ver + title.center(sum(widths) + 3 * len(widths) - 1) + ver]
+  monted_table = "\n".join([line(tleft, hor, tright)]
+    + [ljoin + " Miliseconds TTKs ".center(max_width - 2, hor) + rjoin]
     + [line(ljoin, tjoin, rjoin)]
     + [item for i, row in enumerate(rows) for item in
       ["".join(f"{ver} {c.ljust(w)} " for c, w in zip(row, widths)) + ver]
       + ([middle_line] if i < len_rows else [])]
     + [line(bleft, bjoin, bright)])
+
+  return monted_table, max_width
 
 ############################
 ###    MAIN INTERFACE    ###
@@ -73,35 +74,23 @@ def main_interface(root: Tk) -> None:
   rate_entry = Entry(frame1, width = 15)
   rate_entry.grid(row = row, column = 1)
 
-  row += 1
-  name_text = "Weapon name (optional):"
-  Label(frame1, text = name_text).grid(row = row, column = 0)
-  name_entry = Entry(frame1, width = 15)
-  name_entry.grid(row = row, column = 1)
+  result_text = Text(frame2, height = 19)
 
-  result_text = Text(frame2, width = 52, height = 19)
-  result_text.pack(padx = 10, pady = 10)
-  result_text.config(state = "disabled")
-
-  for child in frame1.winfo_children():
-    child.grid_configure(padx = 5, pady = 5)
-  for child in frame2.winfo_children():
-    child.grid_configure(padx = 5, pady = 5)
-
-  def show_results(results: str):
-    result_text.config(state = "normal")
+  def show_results(results: str, width: int):
+    result_text.pack(padx = 5, pady = 5)
+    result_text.config(state = "normal", width = width)
     result_text.delete("1.0", "end")
     result_text.insert("end", results)
     result_text.config(state = "disabled")
 
   def calculate():
     try:
+      rate = float(rate_entry.get())
       damages = [float(e.get()) for e in damages_entry]
       drops = [float(e) for e in drop_entry.get().split()]
-      rate, name = float(rate_entry.get()), name_entry.get()
-      show_results(get_table(damages, drops, rate, name))
+      show_results(*get_table(damages, drops, rate))
     except Exception as e:
-      show_results(f"An internal error occurred: {e!s}")
+      show_results(f"Internal error occurred: {e!s}", 40)
 
   def focus_next(widget: Entry | Button):
     elem = widget.tk_focusNext()
@@ -109,12 +98,16 @@ def main_interface(root: Tk) -> None:
     return "break"
 
   damages_entry[0].focus_set()
-  for entry in damages_entry + [drop_entry, rate_entry, name_entry]:
+  for entry in damages_entry + [drop_entry, rate_entry]:
     entry.bind("<Return>", lambda x: focus_next(x.widget))
 
-  calcbtn = Button(root, text = "Calculate", command = calculate)
-  calcbtn.grid(row = 1, column = 0, columnspan = 2, pady = "0 10")
+  row += 1
+  calcbtn = Button(frame1, text = "Calculate", command = calculate)
+  calcbtn.grid(row = row, column = 0, columnspan = 2, pady = "0 10")
   calcbtn.bind("<Return>", lambda x: (focus_next(x.widget), calculate()))
+
+  for child in frame1.winfo_children():
+    child.grid_configure(padx = 5, pady = 5)
 
   root.mainloop()
 
