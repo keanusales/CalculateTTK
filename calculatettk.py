@@ -74,7 +74,7 @@ def main_interface(root: Tk) -> None:
   rate_entry = Entry(frame1, width = 15)
   rate_entry.grid(row = row, column = 1)
 
-  result_text = Text(frame2, height = 19)
+  result_text = Text(frame2, width = 0, height = 19)
 
   def show_results(results: str, width: int):
     result_text.pack(padx = 5, pady = 5)
