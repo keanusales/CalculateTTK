@@ -99,7 +99,7 @@ def main_interface(root: Tk) -> None:
       drops = sorted((float(e) for e in drop_entry.get().split()), reverse = True)
       show_results(*get_table(damages, drops, rate))
     except Exception as e:
-      show_results(f"Internal error occurred: {e!s}", 40)
+      show_results(f"An internal error occurred: {e!s}", 40)
 
   def focus_next(widget: Entry | Button):
     elem = widget.tk_focusNext()
@@ -125,7 +125,7 @@ def main_interface(root: Tk) -> None:
 
   row += 1
   calcbtn = Button(frame1, text = "Calculate", command = calculate)
-  calcbtn.grid(row = row, column = 0, columnspan = 2, pady = "0 10")
+  calcbtn.grid(row = row, column = 0, columnspan = 2)
   calcbtn.bind("<Return>", lambda x: (focus_next(x.widget), calculate()))
 
   for child in frame1.winfo_children():
