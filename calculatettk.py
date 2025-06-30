@@ -96,7 +96,8 @@ def main_interface(root: Tk) -> None:
     try:
       rate = float(rate_entry.get())
       damages = [parse_damage(e.get()) for e in damages_entry]
-      drops = sorted((float(e) for e in drop_entry.get().split()), reverse = True)
+      drops = (float(e) for e in drop_entry.get().split())
+      drops = sorted(drops, reverse = True)
       show_results(*get_table(damages, drops, rate))
     except Exception as e:
       show_results(f"An internal error occurred: {e!s}", 40)
@@ -104,7 +105,8 @@ def main_interface(root: Tk) -> None:
   def focus_next(widget: Entry | Button) -> str:
     elem = widget.tk_focusNext()
     if elem: elem.focus_set()
-    if isinstance(elem, Entry): elem.selection_range(0, "end")
+    if isinstance(elem, Entry): elem.select_range(0, "end")
+    if isinstance(widget, Button): widget.invoke()
     return "break"
 
   def copy_text(entry1: Entry, entry2: Entry) -> str:
@@ -125,9 +127,9 @@ def main_interface(root: Tk) -> None:
   row += 1
   calcbtn = Button(frame1, text = "Calculate", command = calculate)
   calcbtn.grid(row = row, column = 0, columnspan = 2)
-  calcbtn.bind("<Return>", lambda x: (focus_next(x.widget), calculate()))
+  calcbtn.bind("<Return>", lambda x: focus_next(x.widget))
 
-  for child in frame1.winfo_children(): child.grid_configure(padx = 5, pady = 5)
+  for child in frame1.winfo_children(): child.grid(padx = 5, pady = 5)
 
   root.mainloop()
 
