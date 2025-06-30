@@ -1,5 +1,7 @@
 from tkinter.ttk import Frame, Label, Entry, Button
+from itertools import pairwise
 from tkinter import Text, Tk
+from re import fullmatch
 from math import ceil
 
 ############################
@@ -83,11 +85,18 @@ def main_interface(root: Tk) -> None:
     result_text.insert("end", results)
     result_text.config(state = "disabled")
 
+  def parse_damage(value: str) -> float:
+    value = value.strip()
+    match = fullmatch(r"(\d+(?:\.\d+)?)\s*\*\s*(\d+(?:\.\d+)?)", value)
+    if not match: return float(value)
+    first_value, second_value = match.groups()
+    return float(first_value) * float(second_value)
+
   def calculate():
     try:
       rate = float(rate_entry.get())
-      damages = [float(e.get()) for e in damages_entry]
-      drops = [float(e) for e in drop_entry.get().split()]
+      damages = [parse_damage(e.get()) for e in damages_entry]
+      drops = sorted((float(e) for e in drop_entry.get().split()), reverse = True)
       show_results(*get_table(damages, drops, rate))
     except Exception as e:
       show_results(f"Internal error occurred: {e!s}", 40)
@@ -95,11 +104,23 @@ def main_interface(root: Tk) -> None:
   def focus_next(widget: Entry | Button):
     elem = widget.tk_focusNext()
     if elem: elem.focus_set()
+    if isinstance(elem, Entry):
+      elem.selection_range(0, "end")
+    return "break"
+
+  def copy_down(current: Entry, next: Entry):
+    value = current.get()
+    next.delete(0, "end")
+    next.insert(0, value)
+    next.focus_set()
     return "break"
 
   damages_entry[0].focus_set()
   for entry in damages_entry + [drop_entry, rate_entry]:
     entry.bind("<Return>", lambda x: focus_next(x.widget))
+
+  for current, next in pairwise(damages_entry):
+    current.bind("<Down>", lambda x, n = next: copy_down(x.widget, n))
 
   row += 1
   calcbtn = Button(frame1, text = "Calculate", command = calculate)
