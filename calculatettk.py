@@ -108,19 +108,20 @@ def main_interface(root: Tk) -> None:
       elem.selection_range(0, "end")
     return "break"
 
-  def copy_down(current: Entry, next: Entry):
-    value = current.get()
-    next.delete(0, "end")
-    next.insert(0, value)
-    next.focus_set()
+  def copy_text(entry1: Entry, entry2: Entry):
+    value = entry1.get()
+    entry2.delete(0, "end")
+    entry2.insert(0, value)
+    entry2.focus_set()
     return "break"
 
   damages_entry[0].focus_set()
   for entry in damages_entry + [drop_entry, rate_entry]:
     entry.bind("<Return>", lambda x: focus_next(x.widget))
 
-  for current, next in pairwise(damages_entry):
-    current.bind("<Down>", lambda x, n = next: copy_down(x.widget, n))
+  for entry1, entry2 in pairwise(damages_entry):
+    entry1.bind("<Down>", lambda x, n = entry2: copy_text(x.widget, n))
+    entry2.bind("<Up>", lambda x, n = entry1: copy_text(x.widget, n))
 
   row += 1
   calcbtn = Button(frame1, text = "Calculate", command = calculate)
