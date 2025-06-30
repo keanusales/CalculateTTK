@@ -11,9 +11,9 @@ from math import ceil
 bodyparts = ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
 
 def get_ttk(damages: list[float], drops: list[float], rate: float) -> list[list[float]]:
-  if (len(damages) < len(bodyparts) or not all(d > 0 for d in damages)
-    or not drops or not all(0 < d <= 1 for d in drops) or not (rate > 0)):
-      raise ValueError("Theres an invalid input. Ensure the values are correct.")
+  if (len(damages) != len(bodyparts) or not all(d > 0 for d in damages)
+      or not drops or not all(0 < d <= 1 for d in drops) or not (rate > 0)):
+    raise ValueError("There is an invalid input. Ensure the values are correct.")
   return [[(60000 / rate) * (ceil(100 / d / n) - 1) for n in drops] for d in damages]
 
 ############################
@@ -78,7 +78,7 @@ def main_interface(root: Tk) -> None:
 
   result_text = Text(frame2, width = 0, height = 19)
 
-  def show_results(results: str, width: int):
+  def show_results(results: str, width: int) -> None:
     result_text.pack(padx = 5, pady = 5)
     result_text.config(state = "normal", width = width)
     result_text.delete("1.0", "end")
@@ -92,7 +92,7 @@ def main_interface(root: Tk) -> None:
     first_value, second_value = match.groups()
     return float(first_value) * float(second_value)
 
-  def calculate():
+  def calculate() -> None:
     try:
       rate = float(rate_entry.get())
       damages = [parse_damage(e.get()) for e in damages_entry]
@@ -101,14 +101,13 @@ def main_interface(root: Tk) -> None:
     except Exception as e:
       show_results(f"An internal error occurred: {e!s}", 40)
 
-  def focus_next(widget: Entry | Button):
+  def focus_next(widget: Entry | Button) -> str:
     elem = widget.tk_focusNext()
     if elem: elem.focus_set()
-    if isinstance(elem, Entry):
-      elem.selection_range(0, "end")
+    if isinstance(elem, Entry): elem.selection_range(0, "end")
     return "break"
 
-  def copy_text(entry1: Entry, entry2: Entry):
+  def copy_text(entry1: Entry, entry2: Entry) -> str:
     value = entry1.get()
     entry2.delete(0, "end")
     entry2.insert(0, value)
@@ -128,8 +127,7 @@ def main_interface(root: Tk) -> None:
   calcbtn.grid(row = row, column = 0, columnspan = 2)
   calcbtn.bind("<Return>", lambda x: (focus_next(x.widget), calculate()))
 
-  for child in frame1.winfo_children():
-    child.grid_configure(padx = 5, pady = 5)
+  for child in frame1.winfo_children(): child.grid_configure(padx = 5, pady = 5)
 
   root.mainloop()
 
