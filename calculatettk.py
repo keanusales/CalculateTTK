@@ -28,7 +28,7 @@ def table(damages: list[float], drops: list[float], rate: float) -> tuple[str, i
     return left + join.join(hor * (w + 2) for w in widths) + right
 
   max_width = sum(widths) + 3 * len(widths) + 1
-  title = f" TTK Calculator {hor} Punishment: {punishment:.1f} ms "
+  title = f" Punishment {hor} {punishment:.1f} ms "
   middle_line, len_rows = line(ljoin, mjoin, rjoin), (len(rows) - 1)
 
   monted_table = "\n".join([line(tleft, hor, tright)]
