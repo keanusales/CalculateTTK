@@ -27,8 +27,8 @@ def table(damages: list[float], drops: list[float], rate: float) -> tuple[str, i
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (w + 2) for w in widths) + right
 
-  max_width = sum(widths) + 3 * len(widths) + 1
-  title = f" Punishment {hor} {punishment:.1f} ms "
+  title = f" Punishment: {punishment:.1f} ms "
+  max_width = (sum(widths) + 3 * len(widths) + 1)
   middle_line, len_rows = line(ljoin, mjoin, rjoin), (len(rows) - 1)
 
   monted_table = "\n".join([line(tleft, hor, tright)]
