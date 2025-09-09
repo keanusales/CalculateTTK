@@ -6,28 +6,29 @@ from math import ceil
 
 bodyparts = ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
 
-get_ttk_rtype = tuple[list[list[float]], float]
-def get_ttk(damages: list[float], drops: list[float], rate: float) -> get_ttk_rtype:
+def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, int]:
   if (len(damages) != len(bodyparts) or not all(d > 0 for d in damages)
-      or not drops or not all(0 < d <= 1 for d in drops) or not (rate > 0)):
-    raise ValueError("There is an invalid input. Ensure the values are correct.")
-  punishment = 60000 / rate
-  ttks = [[punishment * (ceil(100 / d / n) - 1) for n in drops] for d in damages]
-  return ttks, punishment
+    or not drops or not all(0 < d <= 1 for d in drops) or not (rate > 0)):
+      raise ValueError("Invalid input detected. Ensure the correct values.")
 
-def table(damages: list[float], drops: list[float], rate: float) -> tuple[str, int]:
   hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
 
-  ttks, punishment = get_ttk(damages, drops, rate)
+  def calc_ttk(punish: float, damage: float, drop: float) -> str:
+    return f"{(punish * (ceil(100 / damage / drop) - 1)):.1f}"
+
+  punish = 60000 / rate
   rows = ([["Part/Drop"] + [f"{drop}x" for drop in drops]] +
-    [[p] + [f"{v:.1f}" for v in ts] for p, ts in zip(bodyparts, ttks)])
+    [[part] + [calc_ttk(punish, damage, drop) for drop in drops]
+      for part, damage in zip(bodyparts, damages)])
+
   widths = [max(len(value) for value in column) for column in zip(*rows)]
+  rows = [[cell.ljust(val) for cell, val in zip(row, widths)] for row in rows]
 
   def line(left: str, join: str, right: str) -> str:
-    return left + join.join(hor * (w + 2) for w in widths) + right
+    return left + join.join(hor * (val + 2) for val in widths) + right
 
-  title = f" Punishment: {punishment:.1f} ms "
+  title = f" Punishment: {punish:.1f} ms "
   max_width = (sum(widths) + 3 * len(widths) + 1)
   middle_line, len_rows = line(ljoin, mjoin, rjoin), (len(rows) - 1)
 
@@ -35,7 +36,7 @@ def table(damages: list[float], drops: list[float], rate: float) -> tuple[str, i
     + [ljoin + title.center(max_width - 2, hor) + rjoin]
     + [line(ljoin, tjoin, rjoin)]
     + [item for i, row in enumerate(rows) for item in
-      ["".join(f"{ver} {c.ljust(w)} " for c, w in zip(row, widths)) + ver]
+      ["".join(f"{ver} {cell} " for cell in row) + ver]
       + ([middle_line] if i < len_rows else [])]
     + [line(bleft, bjoin, bright)])
 
@@ -90,7 +91,7 @@ def main_interface(root: Tk) -> None:
       damages = [parse_damage(e.get()) for e in damages_entry]
       drops = (float(e) for e in drop_entry.get().split())
       drops = sorted(drops, reverse = True)
-      show_results(*table(damages, drops, rate))
+      show_results(*ttks(damages, drops, rate))
     except Exception as e:
       show_results(f"An internal error occurred: {e!s}", 40)
 
