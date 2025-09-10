@@ -126,4 +126,4 @@ def main_interface(root: Tk) -> None:
 
   root.mainloop()
 
-if __name__ == "__main__": main_interface(root = Tk())
+if __name__ == "__main__": main_interface(Tk(sync = True))
