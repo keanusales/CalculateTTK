@@ -124,6 +124,8 @@ def main_interface(root: Tk) -> None:
 
   for child in frame1.winfo_children(): child.grid(padx = 5, pady = 5)
 
+  root.bind("<Escape>", lambda x: root.destroy())
+
   root.mainloop()
 
 if __name__ == "__main__": main_interface(Tk(sync = True))
