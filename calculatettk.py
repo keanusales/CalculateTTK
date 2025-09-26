@@ -89,8 +89,7 @@ def main_interface(root: Tk) -> None:
     try:
       rate = float(rate_entry.get())
       damages = [parse_damage(e.get()) for e in damages_entry]
-      drops = (float(e) for e in drop_entry.get().split())
-      drops = sorted(drops, reverse = True)
+      drops = sorted((float(e) for e in drop_entry.get().split()), reverse = True)
       show_results(*ttks(damages, drops, rate))
     except Exception as e:
       show_results(f"An internal error occurred: {e!s}", 40)
