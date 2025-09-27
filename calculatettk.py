@@ -19,26 +19,22 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
 
   punish = 60000 / rate
   rows = ([["Part/Drop"] + [f"{drop}x" for drop in drops]] +
-    [[part] + [calc_ttk(punish, damage, drop) for drop in drops]
-      for part, damage in zip(bodyparts, damages)])
+    [[bodypart] + [calc_ttk(punish, damage, drop) for drop in drops]
+      for bodypart, damage in zip(bodyparts, damages)])
 
   widths = [max(len(value) for value in column) for column in zip(*rows)]
-  rows = [[cell.ljust(val) for cell, val in zip(row, widths)] for row in rows]
+  max_width = (sum(widths) + 3 * len(widths) + 1)
+  title = ljoin + f" Punish: {punish:.1f} ms ".center(max_width - 2, hor) + rjoin
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
 
-  title = f" Punishment: {punish:.1f} ms "
-  max_width = (sum(widths) + 3 * len(widths) + 1)
-  middle_line, len_rows = line(ljoin, mjoin, rjoin), (len(rows) - 1)
+  rows = [[cell.ljust(val) for cell, val in zip(row, widths)] for row in rows]
+  rows = [f"{ver} {f" {ver} ".join(row)} {ver}" for row in rows]
+  rows = f"\n{line(ljoin, mjoin, rjoin)}\n".join(rows)
 
-  monted_table = "\n".join([line(tleft, hor, tright)]
-    + [ljoin + title.center(max_width - 2, hor) + rjoin]
-    + [line(ljoin, tjoin, rjoin)]
-    + [item for i, row in enumerate(rows) for item in
-      ["".join(f"{ver} {cell} " for cell in row) + ver]
-      + ([middle_line] if i < len_rows else [])]
-    + [line(bleft, bjoin, bright)])
+  monted_table = "\n".join((line(tleft, hor, tright), title,
+    line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, bright)))
 
   return monted_table, max_width
 
@@ -72,11 +68,11 @@ def main_interface(root: Tk) -> None:
   result_text = Text(frame2, width = 0, height = 19)
 
   def show_results(results: str, width: int) -> None:
-    result_text.pack(padx = 5, pady = 5)
     result_text.config(state = "normal", width = width)
     result_text.delete("1.0", "end")
     result_text.insert("end", results)
     result_text.config(state = "disabled")
+    result_text.pack(padx = 5, pady = 5)
 
   def parse_damage(value: str) -> float:
     value = value.strip()
@@ -89,7 +85,8 @@ def main_interface(root: Tk) -> None:
     try:
       rate = float(rate_entry.get())
       damages = [parse_damage(e.get()) for e in damages_entry]
-      drops = sorted((float(e) for e in drop_entry.get().split()), reverse = True)
+      drops = sorted((float(e.replace(",", "."))
+        for e in drop_entry.get().split()), reverse = True)
       show_results(*ttks(damages, drops, rate))
     except Exception as e:
       show_results(f"An internal error occurred: {e!s}", 40)
@@ -124,7 +121,6 @@ def main_interface(root: Tk) -> None:
   for child in frame1.winfo_children(): child.grid(padx = 5, pady = 5)
 
   root.bind("<Escape>", lambda x: root.destroy())
-
   root.mainloop()
 
 if __name__ == "__main__": main_interface(Tk(sync = True))
