@@ -23,8 +23,8 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
       for bodypart, damage in zip(bodyparts, damages)])
 
   widths = [max(len(value) for value in column) for column in zip(*rows)]
-  max_width = (sum(widths) + 3 * len(widths) + 1)
-  title = ljoin + f" Punish: {punish:.1f} ms ".center(max_width - 2, hor) + rjoin
+  max_width = (len(widths) * 3 + sum(widths) - 1)
+  title = ljoin + f" Punish: {punish:.1f} ms ".center(max_width, hor) + rjoin
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
@@ -36,7 +36,7 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
   monted_table = "\n".join((line(tleft, hor, tright), title,
     line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, bright)))
 
-  return monted_table, max_width
+  return monted_table, (max_width + 2)
 
 def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
@@ -92,16 +92,14 @@ def main_interface(root: Tk) -> None:
       show_results(f"An internal error occurred: {e!s}", 40)
 
   def focus_next(widget: Entry | Button) -> str:
-    elem = widget.tk_focusNext()
-    if elem: elem.focus_set()
+    if elem := widget.tk_focusNext(): elem.focus_set()
     if isinstance(elem, Entry): elem.select_range(0, "end")
     if isinstance(widget, Button): widget.invoke()
     return "break"
 
   def copy_text(entry1: Entry, entry2: Entry) -> str:
-    value = entry1.get()
     entry2.delete(0, "end")
-    entry2.insert(0, value)
+    entry2.insert(0, entry1.get())
     entry2.focus_set()
     return "break"
 
