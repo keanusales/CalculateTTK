@@ -75,9 +75,10 @@ def main_interface(root: Tk) -> None:
     result_text.pack(padx = 5, pady = 5)
 
   def parse_damage(value: str) -> float:
-    value = value.strip()
-    match = fullmatch(r"(\d+(?:\.\d+)?)\s*\*\s*(\d+(?:\.\d+)?)", value)
-    if not match: return float(value)
+    stripped_value = "".join(value.split())
+    pattern = r"(\d+(?:\.\d+)?)\s*\*\s*(\d+(?:\.\d+)?)"
+    match = fullmatch(pattern, stripped_value)
+    if not match: return float(stripped_value)
     first_value, second_value = match.groups()
     return float(first_value) * float(second_value)
 
