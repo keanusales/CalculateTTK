@@ -1,7 +1,9 @@
 # .spec para gerar o calculatettk em modo onedir
 
+global_name = "calculatettk"
+
 analysis = Analysis(
-    ["calculatettk.py"],
+    [f"{global_name}.py"],
     pathex = [],
     binaries = [],
     datas = [],
@@ -30,7 +32,7 @@ exe = EXE(
     analysis.scripts,
     [("O", None, "OPTION"), ("O", None, "OPTION")],
     exclude_binaries = True,
-    name = "calculatettk",
+    name = global_name,
     debug = False,
     bootloader_ignore_signals = False,
     strip = True,
@@ -50,5 +52,5 @@ coll = COLLECT(
     strip = True,
     upx = True,
     upx_exclude = ["libcrypto-3.dll", "libssl-3.dll"],
-    name = "calculatettk",
+    name = global_name,
 )

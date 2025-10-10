@@ -1,7 +1,9 @@
 # .spec para gerar o calculatettk em modo onefile
 
+global_name = "calculatettk"
+
 analysis = Analysis(
-    ["calculatettk.py"],
+    [f"{global_name}.py"],
     pathex = [],
     binaries = [],
     datas = [],
@@ -31,7 +33,7 @@ exe = EXE(
     analysis.binaries,
     analysis.datas,
     [("O", None, "OPTION"), ("O", None, "OPTION")],
-    name = "calculatettk",
+    name = global_name,
     debug = False,
     bootloader_ignore_signals = False,
     strip = True,
