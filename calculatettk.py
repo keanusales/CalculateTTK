@@ -4,12 +4,15 @@ from tkinter import Text, Tk
 from re import fullmatch
 from math import ceil
 
-bodyparts = ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
+def bodyparts() -> tuple[str, str, str, str, str, str, str]:
+  return ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
 
 def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, int]:
-  if (len(damages) != len(bodyparts) or not all(d > 0 for d in damages)
-    or not drops or not all(0 < d <= 1 for d in drops) or not (rate > 0)):
-      raise ValueError("Invalid input detected. Ensure the correct values.")
+  if not (damages and all(damage > 0 for damage in damages)):
+    raise ValueError("Ensure all damages values are specified and positive.")
+  if not (drops and all(0 < drop <= 1 for drop in drops)):
+    raise ValueError("Ensure all drops values are between 0 and 1 (0, 1].")
+  if rate <= 0: raise ValueError("Ensure the rate value are positive.")
 
   hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
@@ -17,10 +20,10 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
   def calc_ttk(punish: float, damage: float, drop: float) -> str:
     return f"{(punish * (ceil(100 / damage / drop) - 1)):.1f}"
 
-  punish = 60000 / rate
+  punish, parts = (60000 / rate), bodyparts()
   rows = ([["Part/Drop"] + [f"{drop}x" for drop in drops]] +
-    [[bodypart] + [calc_ttk(punish, damage, drop) for drop in drops]
-      for bodypart, damage in zip(bodyparts, damages)])
+    [[part] + [calc_ttk(punish, damage, drop) for drop in drops]
+      for part, damage in zip(parts, damages, strict = True)])
 
   widths = [max(len(value) for value in column) for column in zip(*rows)]
   max_width = (len(widths) * 3 + sum(widths) - 1)
@@ -47,13 +50,14 @@ def main_interface(root: Tk) -> None:
   frame2 = Frame(root, padding = "0 5 5 5")
   frame2.grid(row = 0, column = 1)
 
-  damages_entry = [Entry(frame1, width = 15) for e in bodyparts]
-  for row, row_text in enumerate(bodyparts):
+  parts = bodyparts()
+  damages_entry = [Entry(frame1, width = 15) for e in parts]
+  for row, row_text in enumerate(parts):
     row_text = f"Damage value for {row_text}:"
     Label(frame1, text = row_text).grid(row = row, column = 0)
     damages_entry[row].grid(row = row, column = 1)
 
-  row = len(bodyparts)
+  row = len(parts)
   drop_text = "Damage drops (space separated):"
   Label(frame1, text = drop_text).grid(row = row, column = 0)
   drop_entry = Entry(frame1, width = 15)
@@ -67,7 +71,7 @@ def main_interface(root: Tk) -> None:
 
   result_text = Text(frame2, width = 0, height = 19)
 
-  def show_results(results: str, width: int) -> None:
+  def show_results(results: str, width = 50) -> None:
     result_text.config(state = "normal", width = width)
     result_text.delete("1.0", "end")
     result_text.insert("end", results)
@@ -90,7 +94,7 @@ def main_interface(root: Tk) -> None:
         for e in drop_entry.get().split()), reverse = True)
       show_results(*ttks(damages, drops, rate))
     except Exception as e:
-      show_results(f"An internal error occurred: {e!s}", 40)
+      show_results(f"An internal error occurred: {e!s}")
 
   def focus_next(widget: Entry | Button) -> str:
     if elem := widget.tk_focusNext(): elem.focus_set()
