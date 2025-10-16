@@ -25,16 +25,16 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
     [[part] + [calc_ttk(punish, damage, drop) for drop in drops]
       for part, damage in zip(parts, damages, strict = True)])
 
-  widths = [max(len(value) for value in column) for column in zip(*rows)]
+  widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
   max_width = (len(widths) * 3 + sum(widths) - 1)
   title = ljoin + f" Punish: {punish:.1f} ms ".center(max_width, hor) + rjoin
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
 
-  rows = [[cell.ljust(val) for cell, val in zip(row, widths)] for row in rows]
-  rows = [f"{ver} {f" {ver} ".join(row)} {ver}" for row in rows]
-  rows = f"\n{line(ljoin, mjoin, rjoin)}\n".join(rows)
+  rows = (f"\n{line(ljoin, mjoin, rjoin)}\n".join
+    (f"{ver} {f" {ver} ".join(cell.ljust(val) for cell, val
+      in zip(row, widths, strict = True))} {ver}" for row in rows))
 
   monted_table = "\n".join((line(tleft, hor, tright), title,
     line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, bright)))
