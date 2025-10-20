@@ -26,8 +26,8 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
       for part, damage in zip(parts, damages, strict = True)])
 
   widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
-  max_width = (len(widths) * 3 + sum(widths) - 1)
-  title = ljoin + f" Punish: {punish:.1f} ms ".center(max_width, hor) + rjoin
+  max_width = (twidth := 3 * len(widths) + sum(widths) - 1) + 2
+  title = ljoin + f" Punish: {punish:.1f} ms ".center(twidth, hor) + rjoin
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
@@ -39,7 +39,7 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
   monted_table = "\n".join((line(tleft, hor, tright), title,
     line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, bright)))
 
-  return monted_table, (max_width + 2)
+  return monted_table, max_width
 
 def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
