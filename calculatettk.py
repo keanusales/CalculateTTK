@@ -10,9 +10,9 @@ def bodyparts() -> tuple[str, str, str, str, str, str, str]:
 def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if not (damages and all(damage > 0 for damage in damages)):
     raise ValueError("Ensure all damages values are specified and positive.")
-  if not (drops and all(0 < drop <= 1 for drop in drops)):
+  if not (len(drops) > 1 and all(0 < drop <= 1 for drop in drops)):
     raise ValueError("Ensure all drops values are between 0 and 1 (0, 1].")
-  if rate <= 0: raise ValueError("Ensure the rate value are positive.")
+  if rate <= 0: raise ValueError("Ensure the fire rate value are positive.")
 
   hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
@@ -26,8 +26,8 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
       for part, damage in zip(parts, damages, strict = True)])
 
   widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
-  title = f" Punishment is {punish:.1f} ms "
-  title = ljoin + title.center(3 * len(widths) + sum(widths) - 1, hor) + rjoin
+  title = (ljoin + f" Punishment is {punish:.1f} ms "
+    .center(3 * len(widths) + sum(widths) - 1, hor) + rjoin)
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
@@ -86,7 +86,7 @@ def main_interface(root: Tk) -> None:
         for e in drop_entry.get().split()), reverse = True)
       result_text.set(get_ttk_table(damages, drops, rate))
     except Exception as e:
-      result_text.set(f"An internal error occurred: {e!s}")
+      result_text.set(f"An internal error occurred:\n{e!s}")
     result_label.pack(padx = 5, pady = 5)
 
   def focus_next(widget: Entry | Button) -> str:
