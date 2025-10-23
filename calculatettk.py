@@ -1,13 +1,14 @@
 from tkinter.ttk import Frame, Label, Entry, Button
+from tkinter import StringVar, Tk
 from itertools import pairwise
-from tkinter import Text, Tk
+from tkinter.font import Font
 from re import fullmatch
 from math import ceil
 
 def bodyparts() -> tuple[str, str, str, str, str, str, str]:
   return ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
 
-def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, int]:
+def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if not (damages and all(damage > 0 for damage in damages)):
     raise ValueError("Ensure all damages values are specified and positive.")
   if not (drops and all(0 < drop <= 1 for drop in drops)):
@@ -26,8 +27,8 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
       for part, damage in zip(parts, damages, strict = True)])
 
   widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
-  max_width = (twidth := 3 * len(widths) + sum(widths) - 1) + 2
-  title = ljoin + f" Punish: {punish:.1f} ms ".center(twidth, hor) + rjoin
+  title = f" Punishment is {punish:.1f} ms "
+  title = ljoin + title.center(3 * len(widths) + sum(widths) - 1, hor) + rjoin
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
@@ -36,10 +37,8 @@ def ttks(damages: list[float], drops: list[float], rate: float) -> tuple[str, in
     (f"{ver} {f" {ver} ".join(cell.ljust(val) for cell, val
       in zip(row, widths, strict = True))} {ver}" for row in rows))
 
-  monted_table = "\n".join((line(tleft, hor, tright), title,
+  return "\n".join((line(tleft, hor, tright), title,
     line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, bright)))
-
-  return monted_table, max_width
 
 def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
@@ -69,14 +68,9 @@ def main_interface(root: Tk) -> None:
   rate_entry = Entry(frame1, width = 15)
   rate_entry.grid(row = row, column = 1)
 
-  result_text = Text(frame2, width = 0, height = 19)
-
-  def show_results(results: str, width = 50) -> None:
-    result_text.config(state = "normal", width = width)
-    result_text.delete("1.0", "end")
-    result_text.insert("end", results)
-    result_text.config(state = "disabled")
-    result_text.pack(padx = 5, pady = 5)
+  result_text = StringVar()
+  result_label = Label(frame2, textvariable = result_text,
+    font = Font(family = "Courier New", size = 10))
 
   def parse_damage(value: str) -> float:
     stripped_value = "".join(value.split())
@@ -92,9 +86,10 @@ def main_interface(root: Tk) -> None:
       damages = [parse_damage(e.get()) for e in damages_entry]
       drops = sorted((float(e.replace(",", "."))
         for e in drop_entry.get().split()), reverse = True)
-      show_results(*ttks(damages, drops, rate))
+      result_text.set(get_ttk_table(damages, drops, rate))
     except Exception as e:
-      show_results(f"An internal error occurred: {e!s}")
+      result_text.set(f"An internal error occurred: {e!s}")
+    result_label.pack(padx = 5, pady = 5)
 
   def focus_next(widget: Entry | Button) -> str:
     if elem := widget.tk_focusNext(): elem.focus_set()
