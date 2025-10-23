@@ -1,7 +1,6 @@
 from tkinter.ttk import Frame, Label, Entry, Button
 from tkinter import StringVar, Tk
 from itertools import pairwise
-from tkinter.font import Font
 from re import fullmatch
 from math import ceil
 
@@ -68,9 +67,8 @@ def main_interface(root: Tk) -> None:
   rate_entry = Entry(frame1, width = 15)
   rate_entry.grid(row = row, column = 1)
 
-  result_text = StringVar()
-  result_label = Label(frame2, textvariable = result_text,
-    font = Font(family = "Courier New", size = 10))
+  result_label = Label(frame2, font = ("Courier New", 10),
+    textvariable = (result_text := StringVar()))
 
   def parse_damage(value: str) -> float:
     stripped_value = "".join(value.split())
