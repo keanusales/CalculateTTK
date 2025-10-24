@@ -25,15 +25,15 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
     [[part] + [calc_ttk(punish, damage, drop) for drop in drops]
       for part, damage in zip(parts, damages, strict = True)])
 
-  widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
+  widths = [max(len(val) for val in col) for col in zip(*rows)]
   title = (ljoin + f" Punishment is {punish:.1f} ms "
     .center(3 * len(widths) + sum(widths) - 1, hor) + rjoin)
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
 
-  rows = (f"\n{line(ljoin, mjoin, rjoin)}\n".join
-    (f"{ver} {f" {ver} ".join(cell.ljust(val) for cell, val
+  rows = (f"\n{line(ljoin, mjoin, rjoin)}\n"
+    .join(f"{ver} {f" {ver} ".join(cell.ljust(val) for cell, val
       in zip(row, widths, strict = True))} {ver}" for row in rows))
 
   return "\n".join((line(tleft, hor, tright), title,
