@@ -12,7 +12,7 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
     raise ValueError("Ensure all damages values are specified and positive.")
   if not (len(drops) > 1 and all(0 < drop <= 1 for drop in drops)):
     raise ValueError("Ensure all drops values are between 0 and 1 (0, 1].")
-  if rate <= 0: raise ValueError("Ensure the fire rate value are positive.")
+  if rate <= 0: raise ValueError("Ensure the firerate value are positive.")
 
   hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
@@ -62,7 +62,7 @@ def main_interface(root: Tk) -> None:
   drop_entry.grid(row = row, column = 1)
 
   row += 1
-  rate_text = "Weapon fire rate (shots per minute):"
+  rate_text = "Weapon firerate (shots per minute):"
   Label(frame1, text = rate_text).grid(row = row, column = 0)
   rate_entry = Entry(frame1, width = 15)
   rate_entry.grid(row = row, column = 1)
