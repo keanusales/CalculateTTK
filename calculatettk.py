@@ -43,28 +43,45 @@ def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
   root.resizable(False, False)
 
+  parts = bodyparts()
   frame1 = Frame(root, padding = "5 5 5 5")
   frame1.grid(row = 0, column = 0)
   frame2 = Frame(root, padding = "0 5 5 5")
   frame2.grid(row = 0, column = 1)
 
-  parts = bodyparts()
-  damages_entry = [Entry(frame1, width = 15) for e in parts]
+  def valid_checker(pattern: str):
+    def valid_entry_checker(text: str):
+      return not (text and fullmatch(pattern, text) is None)
+    return valid_entry_checker
+
+  checker = valid_checker(r"\d+[.,]?\d*\s?(\*\s?\d*[.,]?\d*)?")
+  vcmd = (root.register(checker), "%P")
+
+  damages_entry = [Entry(frame1, width = 15,
+    validate = "key", validatecommand = vcmd) for e in parts]
   for row, row_text in enumerate(parts):
     row_text = f"Damage value for {row_text}:"
     Label(frame1, text = row_text).grid(row = row, column = 0)
     damages_entry[row].grid(row = row, column = 1)
 
+  checker = valid_checker(r"1(\s+0[.,]\d*)*")
+  vcmd = (root.register(checker), "%P")
+
   row = len(parts)
   drop_text = "Damage drops (space separated):"
   Label(frame1, text = drop_text).grid(row = row, column = 0)
-  drop_entry = Entry(frame1, width = 15)
+  drop_entry = Entry(frame1, width = 15,
+    validate = "key", validatecommand = vcmd)
   drop_entry.grid(row = row, column = 1)
+
+  checker = valid_checker(r"\d*")
+  vcmd = (root.register(checker), "%P")
 
   row += 1
   rate_text = "Weapon firerate (shots per minute):"
   Label(frame1, text = rate_text).grid(row = row, column = 0)
-  rate_entry = Entry(frame1, width = 15)
+  rate_entry = Entry(frame1, width = 15,
+    validate = "key", validatecommand = vcmd)
   rate_entry.grid(row = row, column = 1)
 
   result_label = Label(frame2, font = ("Courier New", 10),
@@ -72,7 +89,7 @@ def main_interface(root: Tk) -> None:
 
   def parse_damage(value: str) -> float:
     stripped_value = "".join(value.split())
-    pattern = r"(\d+(?:\.\d+)?)\s*\*\s*(\d+(?:\.\d+)?)"
+    pattern = r"(\d+(?:\.\d+)?)\s?\*\s?(\d+(?:\.\d+)?)"
     match = fullmatch(pattern, stripped_value)
     if not match: return float(stripped_value)
     first_value, second_value = match.groups()
