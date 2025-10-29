@@ -54,7 +54,7 @@ def main_interface(root: Tk) -> None:
       return not (text and fullmatch(pattern, text) is None)
     return (root.register(valid_checker_core), "%P")
 
-  cmd1 = valid_checker(r"\d+[.,]?\d*\s?(\*\s?\d*[.,]?\d*)?")
+  cmd1 = valid_checker(r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?")
   damages_entry = [Entry(frame1, width = 15,
     validate = "key", validatecommand = cmd1) for e in parts]
   for row, row_text in enumerate(parts):
@@ -63,7 +63,7 @@ def main_interface(root: Tk) -> None:
     damages_entry[row].grid(row = row, column = 1)
 
   row = len(parts)
-  cmd2 = valid_checker(r"1(\s+(0?[.,]?\d*)?)*")
+  cmd2 = valid_checker(r"1( (0?[.,]?\d*)?)*")
   drop_text = "Damage drops (space separated):"
   Label(frame1, text = drop_text).grid(row = row, column = 0)
   drop_entry = Entry(frame1, width = 15,
@@ -83,7 +83,7 @@ def main_interface(root: Tk) -> None:
 
   def parse_damage(value: str) -> float:
     stripped_value = "".join(value.split())
-    pattern = r"(\d+(?:\.\d+)?)\s?\*\s?(\d+(?:\.\d+)?)"
+    pattern = r"(\d+(?:\.\d+)?) ?\* ?(\d+(?:\.\d+)?)"
     match = fullmatch(pattern, stripped_value)
     if not match: return float(stripped_value)
     first_value, second_value = match.groups()
