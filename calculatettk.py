@@ -63,7 +63,7 @@ def main_interface(root: Tk) -> None:
     damages_entry[row].grid(row = row, column = 1)
 
   row = len(parts)
-  cmd2 = valid_checker(r"1( (0?[.,]?\d*)?)*")
+  cmd2 = valid_checker(r"1( (0?[.,]?\d*))*")
   drop_text = "Damage drops (space separated):"
   Label(frame1, text = drop_text).grid(row = row, column = 0)
   drop_entry = Entry(frame1, width = 15,
