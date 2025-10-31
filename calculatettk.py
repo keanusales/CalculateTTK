@@ -49,8 +49,8 @@ def main_interface(root: Tk) -> None:
   frame2 = Frame(root, padding = "0 5 5 5")
   frame2.grid(row = 0, column = 1)
 
-  def valid_checker(pattern: str):
-    def valid_checker_core(text: str):
+  def valid_checker(pattern: str) -> tuple[str, str]:
+    def valid_checker_core(text: str) -> bool:
       return not (text and fullmatch(pattern, text) is None)
     return (root.register(valid_checker_core), "%P")
 
