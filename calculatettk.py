@@ -1,7 +1,7 @@
 from tkinter.ttk import Frame, Label, Entry, Button
+from re import compile as re_compile
 from tkinter import StringVar, Tk
 from itertools import pairwise
-from re import fullmatch
 from math import ceil
 
 def bodyparts() -> tuple[str, str, str, str, str, str, str]:
@@ -25,7 +25,8 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
     [[part] + [calc_ttk(punish, damage, drop) for drop in drops]
       for part, damage in zip(parts, damages, strict = True)])
 
-  widths = [max(len(val) for val in col) for col in zip(*rows)]
+  zip_columns = zip(*rows, strict = True)
+  widths = [max(len(val) for val in col) for col in zip_columns]
   title = (ljoin + f" Punishment is {punish:.1f} ms "
     .center(3 * len(widths) + sum(widths) - 1, hor) + rjoin)
 
@@ -50,8 +51,9 @@ def main_interface(root: Tk) -> None:
   frame2.grid(row = 0, column = 1)
 
   def valid_checker(pattern: str) -> tuple[str, str]:
+    compiled = re_compile(pattern)
     def valid_checker_core(text: str) -> bool:
-      return not (text and fullmatch(pattern, text) is None)
+      return not (text and compiled.fullmatch(text) is None)
     return (root.register(valid_checker_core), "%P")
 
   cmd1 = valid_checker(r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?")
@@ -63,7 +65,7 @@ def main_interface(root: Tk) -> None:
     damages_entry[row].grid(row = row, column = 1)
 
   row = len(parts)
-  cmd2 = valid_checker(r"1( (0?[.,]?\d*))*")
+  cmd2 = valid_checker(r"1 ?((0?[.,]\d*) ?)*")
   drop_text = "Damage drops (space separated):"
   Label(frame1, text = drop_text).grid(row = row, column = 0)
   drop_entry = Entry(frame1, width = 15,
@@ -81,10 +83,10 @@ def main_interface(root: Tk) -> None:
   result_label = Label(frame2, font = ("Courier New", 10),
     textvariable = (result_text := StringVar()))
 
+  compiled = re_compile(r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)")
   def parse_damage(value: str) -> float:
     stripped_value = "".join(value.split())
-    pattern = r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)"
-    match = fullmatch(pattern, stripped_value)
+    match = compiled.fullmatch(stripped_value)
     if not match: return float(stripped_value)
     first_value, second_value = match.groups()
     return float(first_value) * float(second_value)
