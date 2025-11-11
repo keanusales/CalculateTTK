@@ -8,11 +8,11 @@ def bodyparts() -> tuple[str, str, str, str, str, str, str]:
   return ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
 
 def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
+  if rate <= 0: raise ValueError("Ensure the firerate value are positive.")
+  if not (drops and all(0 < drop <= 1 for drop in drops)):
+    raise ValueError("Ensure all drops values are between 0 and 1 (0, 1].")
   if not (damages and all(damage > 0 for damage in damages)):
     raise ValueError("Ensure all damages values are specified and positive.")
-  if not (len(drops) > 1 and all(0 < drop <= 1 for drop in drops)):
-    raise ValueError("Ensure all drops values are between 0 and 1 (0, 1].")
-  if rate <= 0: raise ValueError("Ensure the firerate value are positive.")
 
   hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
