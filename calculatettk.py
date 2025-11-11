@@ -51,9 +51,10 @@ def main_interface(root: Tk) -> None:
   frame2.grid(row = 0, column = 1)
 
   def valid_checker(pattern: str) -> tuple[str, str]:
-    compiled = re_compile(pattern)
+    compiled_checker = re_compile(pattern)
     def valid_checker_core(text: str) -> bool:
-      return not (text and compiled.fullmatch(text) is None)
+      fullmatch = compiled_checker.fullmatch(text)
+      return not (text and fullmatch is None)
     return (root.register(valid_checker_core), "%P")
 
   cmd1 = valid_checker(r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?")
@@ -83,12 +84,12 @@ def main_interface(root: Tk) -> None:
   result_label = Label(frame2, font = ("Courier New", 10),
     textvariable = (result_text := StringVar()))
 
-  compiled = re_compile(r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)")
-  def parse_damage(value: str) -> float:
-    stripped_value = "".join(value.split())
-    match = compiled.fullmatch(stripped_value)
-    if not match: return float(stripped_value)
-    first_value, second_value = match.groups()
+  dmg_parser = re_compile(r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)")
+  def parse_damage(damage_value: str) -> float:
+    stripped_value = "".join(damage_value.split())
+    fullmatch = dmg_parser.fullmatch(stripped_value)
+    if not fullmatch: return float(stripped_value)
+    first_value, second_value = fullmatch.groups()
     return float(first_value) * float(second_value)
 
   def calculate() -> None:
