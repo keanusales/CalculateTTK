@@ -84,10 +84,10 @@ def main_interface(root: Tk) -> None:
   result_label = Label(frame2, font = ("Courier New", 10),
     textvariable = (result_text := StringVar()))
 
-  dmg_parser = re_compile(r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)")
+  damage_parser = re_compile(r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)")
   def parse_damage(damage_value: str) -> float:
     stripped_value = "".join(damage_value.split())
-    fullmatch = dmg_parser.fullmatch(stripped_value)
+    fullmatch = damage_parser.fullmatch(stripped_value)
     if not fullmatch: return float(stripped_value)
     first_value, second_value = fullmatch.groups()
     return float(first_value) * float(second_value)
