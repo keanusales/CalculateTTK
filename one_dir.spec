@@ -30,7 +30,6 @@ pyz = PYZ(analysis.pure)
 exe = EXE(
     pyz,
     analysis.scripts,
-    [("O", None, "OPTION"), ("O", None, "OPTION")],
     exclude_binaries = True,
     name = global_name,
     debug = False,

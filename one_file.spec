@@ -32,7 +32,6 @@ exe = EXE(
     analysis.scripts,
     analysis.binaries,
     analysis.datas,
-    [("O", None, "OPTION"), ("O", None, "OPTION")],
     name = global_name,
     debug = False,
     bootloader_ignore_signals = False,
