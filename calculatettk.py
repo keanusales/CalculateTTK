@@ -57,28 +57,28 @@ def main_interface(root: Tk) -> None:
       return not (text and fullmatch is None)
     return (root.register(valid_checker_core), "%P")
 
-  cmd1 = valid_checker(r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?")
+  checker = valid_checker(r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?")
   damages_entry = [Entry(frame1, width = 15,
-    validate = "key", validatecommand = cmd1) for e in parts]
+    validate = "key", validatecommand = checker) for e in parts]
   for row, row_text in enumerate(parts):
     row_text = f"Damage value for {row_text}:"
     Label(frame1, text = row_text).grid(row = row, column = 0)
     damages_entry[row].grid(row = row, column = 1)
 
   row = len(parts)
-  cmd2 = valid_checker(r"1 ?((0?[.,]\d*) ?)*")
+  checker = valid_checker(r"1 ?((0?[.,]\d*) ?)*")
   drop_text = "Damage drops (space separated):"
   Label(frame1, text = drop_text).grid(row = row, column = 0)
   drop_entry = Entry(frame1, width = 15,
-    validate = "key", validatecommand = cmd2)
+    validate = "key", validatecommand = checker)
   drop_entry.grid(row = row, column = 1)
 
   row += 1
-  cmd3 = valid_checker(r"\d*\.?\d*")
+  checker = valid_checker(r"\d*\.?\d*")
   rate_text = "Weapon firerate (shots per minute):"
   Label(frame1, text = rate_text).grid(row = row, column = 0)
   rate_entry = Entry(frame1, width = 15,
-    validate = "key", validatecommand = cmd3)
+    validate = "key", validatecommand = checker)
   rate_entry.grid(row = row, column = 1)
 
   result_label = Label(frame2, font = ("Courier New", 10),
