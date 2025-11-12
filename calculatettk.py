@@ -74,7 +74,7 @@ def main_interface(root: Tk) -> None:
   drop_entry.grid(row = row, column = 1)
 
   row += 1
-  checker = valid_checker(r"\d*\.?\d*")
+  checker = valid_checker(r"\d+\.?\d*")
   rate_text = "Weapon firerate (shots per minute):"
   Label(frame1, text = rate_text).grid(row = row, column = 0)
   rate_entry = Entry(frame1, width = 15,
