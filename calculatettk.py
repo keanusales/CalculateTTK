@@ -14,8 +14,8 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if not (damages and all(damage > 0 for damage in damages)):
     raise ValueError("Ensure all damages values are specified and positive.")
 
-  hor, ver, tleft, tright, bleft, bright = "═", "║", "╔", "╗", "╚", "╝"
-  tjoin, bjoin, ljoin, rjoin, mjoin = "╦", "╩", "╠", "╣", "╬"
+  hor, ver, tleft, trght, bleft, brght = "═", "║", "╔", "╗", "╚", "╝"
+  tjoin, bjoin, ljoin, mjoin, rjoin = "╦", "╩", "╠", "╬", "╣"
 
   def calc_ttk(punish: float, damage: float, drop: float) -> str:
     return f"{(punish * (ceil(100 / damage / drop) - 1)):.1f}"
@@ -25,20 +25,20 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
     [[part] + [calc_ttk(punish, damage, drop) for drop in drops]
       for part, damage in zip(parts, damages, strict = True)])
 
-  zip_columns = zip(*rows, strict = True)
-  widths = [max(len(val) for val in col) for col in zip_columns]
-  title = (ljoin + f" Punishment is {punish:.1f} ms "
-    .center(3 * len(widths) + sum(widths) - 1, hor) + rjoin)
+  widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
 
   def line(left: str, join: str, right: str) -> str:
     return left + join.join(hor * (val + 2) for val in widths) + right
 
   rows = (f"\n{line(ljoin, mjoin, rjoin)}\n"
-    .join(f"{ver} {f" {ver} ".join(cell.ljust(val) for cell, val
+    .join(f"{ver} {f" {ver} ".join(cll.ljust(val) for cll, val
       in zip(row, widths, strict = True))} {ver}" for row in rows))
 
-  return "\n".join((line(tleft, hor, tright), title,
-    line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, bright)))
+  title = f"{ljoin}{f" Punishment is {punish:.1f} ms "
+    .center(3 * len(widths) + sum(widths) - 1, hor)}{rjoin}"
+
+  return "\n".join((line(tleft, hor, trght), title,
+    line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, brght)))
 
 def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
