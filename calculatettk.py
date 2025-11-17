@@ -14,26 +14,25 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if not (damages and all(damage > 0 for damage in damages)):
     raise ValueError("Ensure all damages values are specified and positive.")
 
+  punish, parts = (60000 / rate), bodyparts()
   hor, ver, tleft, trght, bleft, brght = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, mjoin, rjoin = "╦", "╩", "╠", "╬", "╣"
-
-  (first_row := ["Part/Drop"]).extend(f"{drop}x" for drop in drops)
-  rows, punish, parts = [first_row], (60000 / rate), bodyparts()
 
   def calc_ttk(damage: float, drop: float) -> str:
     return f"{(punish * (ceil(100 / damage / drop) - 1)):.1f}"
 
-  rows.extend(ttks for part, damage in zip(parts, damages, strict = True)
-    if not (ttks := [part]).extend(calc_ttk(damage, drop) for drop in drops))
+  rows = ([["Part/Drop"] + [f"{drop}x" for drop in drops]] +
+    [[part] + [calc_ttk(damage, dmg_drop) for dmg_drop in drops]
+      for part, damage in zip(parts, damages, strict = True)])
 
-  widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
+  widths = [max(len(v) for v in c) for c in zip(*rows, strict = True)]
 
   def line(left: str, join: str, right: str) -> str:
-    return f"{left}{join.join(hor * (val + 2) for val in widths)}{right}"
+    return f"{left}{join.join(hor * (v + 2) for v in widths)}{right}"
 
   rows = (f"\n{line(ljoin, mjoin, rjoin)}\n"
-    .join(f"{ver} {f" {ver} ".join(cll.ljust(val) for cll, val
-      in zip(row, widths, strict = True))} {ver}" for row in rows))
+    .join(f"{ver} {f" {ver} ".join(cell.ljust(v) for v, cell
+      in zip(widths, row, strict = True))} {ver}" for row in rows))
 
   title = f"{ljoin}{f" Punishment is {punish:.1f} ms "
     .center(3 * len(widths) + sum(widths) - 1, hor)}{rjoin}"
