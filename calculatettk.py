@@ -25,9 +25,9 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   first_line = ["Part/Drop"]
   first_line.extend(f"{drop}x" for drop in drops)
   rows = [first_line]
-  rows.extend(temp_list for part, damage in zip(parts, damages, strict = True)
-    if (temp_list := [part]) and not
-    temp_list.extend(calc_ttk(punish, damage, drop) for drop in drops))
+  rows.extend(ttks for part, damage in zip(parts, damages, strict = True)
+    if (ttks := [part]) and not
+    ttks.extend(calc_ttk(punish, damage, drop) for drop in drops))
 
   widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
 
