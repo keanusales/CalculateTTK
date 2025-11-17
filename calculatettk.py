@@ -29,7 +29,7 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
 
   def line(left: str, join: str, right: str) -> str:
-    return left + join.join(hor * (val + 2) for val in widths) + right
+    return f"{left}{join.join(hor * (val + 2) for val in widths)}{right}"
 
   rows = (f"\n{line(ljoin, mjoin, rjoin)}\n"
     .join(f"{ver} {f" {ver} ".join(cll.ljust(val) for cll, val
