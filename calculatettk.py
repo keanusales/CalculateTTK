@@ -17,8 +17,8 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   hor, ver, tleft, trght, bleft, brght = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, mjoin, rjoin = "╦", "╩", "╠", "╬", "╣"
 
-  first_line = ["Part/Drop"]; first_line.extend(f"{drop}x" for drop in drops)
-  rows, punish, parts = [first_line], (60000 / rate), bodyparts()
+  (first_row := ["Part/Drop"]).extend(f"{drop}x" for drop in drops)
+  rows, punish, parts = [first_row], (60000 / rate), bodyparts()
 
   def calc_ttk(damage: float, drop: float) -> str:
     return f"{(punish * (ceil(100 / damage / drop) - 1)):.1f}"
