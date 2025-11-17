@@ -17,12 +17,15 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   hor, ver, tleft, trght, bleft, brght = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, mjoin, rjoin = "╦", "╩", "╠", "╬", "╣"
 
+  punishment = (60000 / rate)
+  def calc_ttk(damage: float, drop: float) -> str:
+    return f"{(punishment * (ceil(100 / damage / drop) - 1)):.1f}"
+
   first_line = ["Part/Drop"]
   first_line.extend(f"{drop}x" for drop in drops)
-  rows, punish, parts = [first_line], (60000 / rate), bodyparts()
+  rows, parts = [first_line], bodyparts()
   rows.extend(ttks for part, damage in zip(parts, damages, strict = True)
-    if not (ttks := [part]).extend(
-      f"{(punish * (ceil(100 / damage / drop) - 1)):.1f}" for drop in drops))
+    if not (ttks := [part]).extend(calc_ttk(damage, drop) for drop in drops))
 
   widths = [max(len(val) for val in col) for col in zip(*rows, strict = True)]
 
@@ -33,7 +36,7 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
     .join(f"{ver} {f" {ver} ".join(cll.ljust(val) for cll, val
       in zip(row, widths, strict = True))} {ver}" for row in rows))
 
-  title = f"{ljoin}{f" Punishment is {punish:.1f} ms "
+  title = f"{ljoin}{f" Punishment is {punishment:.1f} ms "
     .center(3 * len(widths) + sum(widths) - 1, hor)}{rjoin}"
 
   return "\n".join((line(tleft, hor, trght), title,
