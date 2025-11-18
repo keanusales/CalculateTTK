@@ -81,8 +81,8 @@ def main_interface(root: Tk) -> None:
     validate = "key", validatecommand = checker)
   rate_entry.grid(row = row, column = 1)
 
-  result_label = Label(frame2, font = ("Courier New", 10),
-    textvariable = (result_text := StringVar()))
+  result_text, font = StringVar(), ("Courier New", 10)
+  result_label = Label(frame2, font = font, textvariable = result_text)
 
   damage_parser = re_compile(r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)")
   def parse_damage(damage_value: str) -> float:
