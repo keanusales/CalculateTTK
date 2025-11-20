@@ -15,7 +15,7 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
     raise ValueError("Ensure all damages values are specified and positive.")
 
   punish, parts = (60000 / rate), bodyparts()
-  hor, ver, tleft, trght, bleft, brght = "═", "║", "╔", "╗", "╚", "╝"
+  hor, ver, tlhs, trhs, blhs, brhs = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, mjoin, rjoin = "╦", "╩", "╠", "╬", "╣"
 
   def calc_ttk(damage: float, drop: float) -> str:
@@ -37,8 +37,8 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   title = f"{ljoin}{f" Punishment is {punish:.1f} ms "
     .center(3 * len(widths) + sum(widths) - 1, hor)}{rjoin}"
 
-  return "\n".join((line(tleft, hor, trght), title,
-    line(ljoin, tjoin, rjoin), rows, line(bleft, bjoin, brght)))
+  return "\n".join((line(tlhs, hor, trhs), title,
+    line(ljoin, tjoin, rjoin), rows, line(blhs, bjoin, brhs)))
 
 def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
