@@ -54,7 +54,7 @@ def main_interface(root: Tk) -> None:
     compiled_checker = re_compile(pattern)
     def valid_checker_core(text: str) -> bool:
       fullmatch = compiled_checker.fullmatch(text)
-      return not (text and fullmatch is None)
+      return not text or bool(fullmatch)
     return (root.register(valid_checker_core), "%P")
 
   checker = valid_checker(r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?")
@@ -105,8 +105,8 @@ def main_interface(root: Tk) -> None:
     result_label.pack(padx = 5, pady = 5)
 
   def focus_next(widget: Entry | Button) -> str:
-    if elem := widget.tk_focusNext(): elem.focus_set()
-    if isinstance(elem, Entry): elem.select_range(0, "end")
+    if next := widget.tk_focusNext(): next.focus_set()
+    if isinstance(next, Entry): next.select_range(0, "end")
     if isinstance(widget, Button): widget.invoke()
     return "break"
 
@@ -118,21 +118,21 @@ def main_interface(root: Tk) -> None:
 
   damages_entry[0].focus_set()
   for entry in damages_entry + [drop_entry, rate_entry]:
-    entry.bind("<Return>", lambda x: focus_next(x.widget))
+    entry.bind("<Return>", lambda e: focus_next(e.widget))
 
   for entry1, entry2 in pairwise(damages_entry):
-    entry1.bind("<Down>", lambda x, n = entry2: copy_text(x.widget, n))
-    entry2.bind("<Up>", lambda x, n = entry1: copy_text(x.widget, n))
+    entry1.bind("<Down>", lambda e, n = entry2: copy_text(e.widget, n))
+    entry2.bind("<Up>", lambda e, n = entry1: copy_text(e.widget, n))
 
   row += 1
   calcbtn = Button(frame1, text = "Calculate", command = calculate)
   calcbtn.grid(row = row, column = 0, columnspan = 2)
-  calcbtn.bind("<Return>", lambda x: focus_next(x.widget))
+  calcbtn.bind("<Return>", lambda e: focus_next(e.widget))
 
   for child in frame1.winfo_children():
     if isinstance(child, Widget): child.grid(padx = 5, pady = 5)
 
-  root.bind("<Escape>", lambda x: root.destroy())
+  root.bind("<Escape>", lambda e: root.destroy())
   root.mainloop()
 
 if __name__ == "__main__": main_interface(Tk(sync = True))
