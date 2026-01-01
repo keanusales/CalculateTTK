@@ -9,9 +9,9 @@ def bodyparts() -> tuple[str, str, str, str, str, str, str]:
 
 def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if rate <= 0: raise ValueError("Ensure the firerate value are positive.")
-  if not (drops and all(0 < drop <= 1 for drop in drops)):
+  if not drops or not all(0 < drop <= 1 for drop in drops):
     raise ValueError("Ensure all drops values are between 0 and 1 (0, 1].")
-  if not (damages and all(damage > 0 for damage in damages)):
+  if not damages or not all(damage > 0 for damage in damages):
     raise ValueError("Ensure all damages values are settled and positive.")
 
   punish, parts = (60000 / rate), bodyparts()
