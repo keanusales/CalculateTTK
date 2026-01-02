@@ -100,8 +100,8 @@ def main_interface(root: Tk) -> None:
       drops = sorted((float(e.replace(",", "."))
         for e in drop_entry.get().split()), reverse = True)
       result_text.set(get_ttk_table(damages, drops, rate))
-    except Exception as e:
-      result_text.set(f"An internal error occurred:\n{e!s}")
+    except Exception as x:
+      result_text.set(f"An internal error occurred:\n{x!s}")
     result_label.pack(padx = 5, pady = 5)
 
   def focus_next(widget: Entry | Button) -> str:
