@@ -5,7 +5,8 @@ from itertools import pairwise
 from math import ceil
 
 def bodyparts() -> tuple[str, str, str, str, str, str, str]:
-  return ("Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs")
+  return ("Head", "Upper Torso", "Lower Torso",
+    "Upper Arms", "Lower Arms", "Upper Legs", "Lower Legs")
 
 def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if rate <= 0: raise ValueError("Ensure the firerate value are positive.")
