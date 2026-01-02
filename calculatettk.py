@@ -82,7 +82,7 @@ def main_interface(root: Tk) -> None:
     validate = "key", validatecommand = checker)
   rate_entry.grid(row = row, column = 1)
 
-  result_text, font = StringVar(), ("Courier New", 10)
+  result_text, font = StringVar(), ("Consolas", 10)
   result_label = Label(frame2, textvariable = result_text,
     font = font, anchor = "center", justify = "center")
 
