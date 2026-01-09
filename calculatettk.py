@@ -32,7 +32,7 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
 
   rows = (f"\n{line(ljoin, mjoin, rjoin)}\n"
     .join(f"{ver} {f" {ver} ".join(s.ljust(w) for s, w in
-      zip(row, widths, strict = True))} {ver}" for row in rows))
+      zip(r, widths, strict = True))} {ver}" for r in rows))
 
   title = f"{ljoin}{f" Punishment is {punish:.1f} ms "
     .center(3 * len(widths) + sum(widths) - 1, hor)}{rjoin}"
