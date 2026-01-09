@@ -41,7 +41,7 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
     line(ljoin, tjoin, rjoin), rows, line(blhs, bjoin, brhs)))
 
 def main_interface(root: Tk) -> None:
-  root.title("Delta Force Time-to-Kill Calculator")
+  root.title("Delta Force Time-To-Kill Calculator")
   root.resizable(False, False)
 
   parts = bodyparts()
