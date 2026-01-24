@@ -1,0 +1,6 @@
+{
+  "typeCheckingMode": "standard",
+  "reportUnusedCallResult": false,
+  "reportUnusedVariable": false,
+  "reportUnknownMemberType": false,
+}
