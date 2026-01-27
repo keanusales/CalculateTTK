@@ -70,7 +70,7 @@ analysis.datas = [(src, dest, type) for (src, dest, type) in analysis.datas
     "msgbox.tcl", "msgs", "obsolete", "opt", "package.tcl", "palette.tcl", "parray.tcl",
     "pkgIndex.tcl", "safe.tcl", "safetk", "tarfile", "tcl8", "tcl8.5", "tcl8.6",
     "tearoff.tcl", "test", "term", "tix", "tix8.4", "tk8.6", "tkfbox", "tm.tcl",
-    "tzdata", "unsupported", "word.tcl", "xmfbox"
+    "tzdata", "unsupported", "word.tcl", "xmfbox", ".c", ".h"
   ))]
 
 analysis.binaries = [(name, path, type) for (name, path, type) in analysis.binaries
