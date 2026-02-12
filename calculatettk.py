@@ -4,8 +4,7 @@ from re import compile as re_compile
 from itertools import pairwise
 from math import ceil
 
-def bodyparts() -> tuple[str, str, str, str, str, str, str]:
-  return ("Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs")
+parts = ("Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs")
 
 def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if rate <= 0: raise ValueError("Ensure the firerate value are positive.")
@@ -14,12 +13,12 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
   if not damages or not all(damage > 0 for damage in damages):
     raise ValueError("Ensure all damages values are settled and positive.")
 
-  punish, parts = (60000 / rate), bodyparts()
   hor, ver, tlhs, trhs, blhs, brhs = "═", "║", "╔", "╗", "╚", "╝"
   tjoin, bjoin, ljoin, mjoin, rjoin = "╦", "╩", "╠", "╬", "╣"
 
+  punish = (60000 / rate)
   def get_ttk(damage: float, drop: float) -> str:
-    return f"{((ceil(100 / damage / drop) - 1) * punish):.1f}"
+    return f"{((ceil(100 / (damage * drop)) - 1) * punish):.1f}"
 
   rows = [["Part/Drop"] + [f"{drop}x" for drop in drops]]
   rows += [[part] + [get_ttk(damage, drop) for drop in drops]
@@ -44,7 +43,6 @@ def main_interface(root: Tk) -> None:
   root.title("Delta Force TTK Calculator")
   root.resizable(False, False)
 
-  parts = bodyparts()
   frame1 = Frame(root, padding = "5 5 5 5")
   frame1.grid(row = 0, column = 0)
   frame2 = Frame(root, padding = "0 5 5 5")
