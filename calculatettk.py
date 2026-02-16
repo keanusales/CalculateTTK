@@ -18,7 +18,7 @@ def get_ttk_table(damages: list[float], drops: list[float], rate: float) -> str:
 
   punish = (60000 / rate)
   def get_ttk(damage: float, drop: float) -> str:
-    return f"{((ceil(100 / (damage * drop)) - 1) * punish):.1f}"
+    return f"{((ceil(100 / damage / drop) - 1) * punish):.1f}"
 
   rows = [["Part/Drop"] + [f"{drop}x" for drop in drops]]
   rows += [[part] + [get_ttk(damage, drop) for drop in drops]
