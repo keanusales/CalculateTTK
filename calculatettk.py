@@ -124,7 +124,7 @@ def main_interface(root: Tk) -> None:
 
   row += 1
   calcbtn = Button(frame1, text = "Calculate", command = calculate)
-  calcbtn.grid(row = row, column = 0, columnspan = 2)
+  calcbtn.grid(row = row, column = 0, columnspan = 2, sticky = "ew")
   calcbtn.bind("<Return>", lambda w: focus_next(w.widget))
 
   for child in frame1.winfo_children():
