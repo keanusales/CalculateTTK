@@ -4,21 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -30,7 +29,7 @@ import kotlin.math.ceil
 
 data class TtkRow(val partName: String, val ttks: List<String>)
 
-data class TtkResult(val punishmentMs: Float, val drops: List<Float>, val rows: List<TtkRow>)
+data class TtkResult(val punishmentMs: String, val drops: List<String>, val rows: List<TtkRow>)
 
 val bodyParts = listOf("Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs")
 
@@ -38,7 +37,6 @@ val damageParser = Regex("""(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)""")
 
 fun parseDamage(damageValue: String): Float {
   val strippedValue = damageValue.replace("\\s".toRegex(), "").replace(",", ".")
-
   val matchResult = damageParser.matchEntire(strippedValue)
 
   return if (matchResult != null) {
@@ -56,15 +54,13 @@ fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResu
   require(damages.isNotEmpty() && damages.all { it > 0f }) {
     "Ensure all damages values are settled and positive."
   }
-  require(rate > 0) {
-    "Ensure the firerate value are positive."
-  }
+  require(rate > 0) { "Ensure the firerate value are positive." }
 
   val punish = 60000f / rate
 
   fun getTtk(damage: Float, drop: Float): String {
     val rawTtk = ((ceil((100f / damage / drop).toDouble()) - 1) * punish)
-    return String.format(Locale.US, "%.1f", rawTtk)
+    return String.format(Locale.US, "%.2f", rawTtk)
   }
 
   val resultRows = bodyParts.zip(damages).map { (part, damage) ->
@@ -72,7 +68,10 @@ fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResu
     TtkRow(partName = part, ttks = ttksForPart)
   }
 
-  return TtkResult(punishmentMs = punish, drops = drops, rows = resultRows)
+  val fDrops = drops.map { String.format(Locale.US, "%.2f", it) }
+  val fPunish = String.format(Locale.US, "%.2f", punish)
+
+  return TtkResult(punishmentMs = fPunish, drops = fDrops, rows = resultRows)
 }
 
 @Composable
@@ -83,6 +82,8 @@ fun TtkCalculatorScreen() {
 
   var result by remember { mutableStateOf<TtkResult?>(null) }
   var errorMessage by remember { mutableStateOf<String?>(null) }
+
+  val focusRequesters = remember { List(bodyParts.size) { FocusRequester() } }
 
   Column(
     modifier = Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()),
@@ -98,19 +99,23 @@ fun TtkCalculatorScreen() {
         value = damageInputs[index],
         onValueChange = { damageInputs[index] = it },
         label = { Text("Damage value for $partName") },
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).focusRequester(focusRequesters[index]),
         singleLine = true,
-        keyboardOptions = KeyboardOptions(
-          keyboardType = KeyboardType.Number, imeAction = ImeAction.Next
-        ),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
         trailingIcon = {
           Row {
             IconButton(
-              onClick = { damageInputs[index - 1] = damageInputs[index] },
+              onClick = {
+                damageInputs[index - 1] = damageInputs[index]
+                focusRequesters[index - 1].requestFocus()
+              },
               enabled = index > 0
             ) { Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Up") }
             IconButton(
-              onClick = { damageInputs[index + 1] = damageInputs[index] },
+              onClick = {
+                damageInputs[index + 1] = damageInputs[index]
+                focusRequesters[index + 1].requestFocus()
+              },
               enabled = index < bodyParts.lastIndex
             ) { Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Down") }
           }
