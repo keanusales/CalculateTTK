@@ -16,6 +16,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        resourceConfigurations.addAll(listOf("en"))
     }
     buildFeatures {
         compose = true
@@ -39,9 +40,10 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true // Otimiza e enxuga o código
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release") // Usa a chave acima
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
