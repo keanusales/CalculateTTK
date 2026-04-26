@@ -16,10 +16,13 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        resourceConfigurations.addAll(listOf("en"))
     }
     buildFeatures {
         compose = true
+    }
+
+    androidResources {
+        localeFilters += "en"
     }
 
     signingConfigs {
@@ -44,6 +47,17 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "DebugProbesKt.bin",
+                "META-INF/*.version",
+                "META-INF/version-control-info.textproto",
+                "META-INF/com/android/build/gradle/app-metadata.properties"
+            )
         }
     }
 
