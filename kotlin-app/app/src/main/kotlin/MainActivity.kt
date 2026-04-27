@@ -31,22 +31,25 @@ import kotlin.math.ceil
 
 data class TtkRow(val partName: String, val ttks: List<String>)
 
-data class TtkResult(val punishmentMs: String, val drops: List<String>, val rows: List<TtkRow>)
+data class TtkResult(val punishment: String, val drops: List<String>, val rows: List<TtkRow>)
 
 val bodyParts = listOf("Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs")
 
 val damageParser = Regex("""(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)""")
 
 fun parseDamage(damageValue: String): Float {
-  val strippedValue = damageValue.replace("\\s".toRegex(), "").replace(",", ".")
-  val matchResult = damageParser.matchEntire(strippedValue)
+  val stripped = damageValue.replace("\\s".toRegex(), "").replace(",", ".")
+  val matchResult = damageParser.matchEntire(stripped)
 
   return if (matchResult != null) {
     val (first, second) = matchResult.destructured
     first.toFloat() * second.toFloat()
-  } else {
-    strippedValue.toFloat()
-  }
+  } else stripped.toFloat()
+}
+
+fun parseDrops(dropsValue: String): List<Float> {
+  return dropsValue.replace(",", ".").split("\\s+".toRegex())
+    .filter { it.isNotBlank() }.map { it.toFloat() }.sortedDescending()
 }
 
 fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResult {
@@ -62,7 +65,7 @@ fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResu
 
   fun getTtk(damage: Float, drop: Float): String {
     val rawTtk = ((ceil((100f / damage / drop).toDouble()) - 1) * punish)
-    return String.format(Locale.US, "%.2f", rawTtk)
+    return String.format(Locale.US, "%.3f", rawTtk)
   }
 
   val resultRows = bodyParts.zip(damages).map { (part, damage) ->
@@ -70,10 +73,10 @@ fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResu
     TtkRow(partName = part, ttks = ttksForPart)
   }
 
-  val fDrops = drops.map { String.format(Locale.US, "%.2f", it) }
-  val fPunish = String.format(Locale.US, "%.2f", punish)
+  val fdrops = drops.map { String.format(Locale.US, "%.3f", it) }
+  val fpunish = String.format(Locale.US, "%.3f", punish)
 
-  return TtkResult(punishmentMs = fPunish, drops = fDrops, rows = resultRows)
+  return TtkResult(punishment = fpunish, drops = fdrops, rows = resultRows)
 }
 
 @Composable
@@ -104,7 +107,7 @@ fun TtkCalculatorScreen() {
         label = { Text("Damage value for $partName") },
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).focusRequester(focusRequesters[index]),
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
         trailingIcon = {
           Row {
             IconButton(
@@ -155,11 +158,7 @@ fun TtkCalculatorScreen() {
         try {
           errorMessage = null
           val damages = damageInputs.map { parseDamage(it.text) }
-          val drops = dropInput.replace(",", ".")
-                               .split("\\s+".toRegex())
-                               .filter { it.isNotBlank() }
-                               .map { it.toFloat() }
-                               .sortedDescending()
+          val drops = parseDrops(dropInput)
           val rate = rateInput.toFloat()
           result = calculateTtk(damages, drops, rate)
         } catch (e: Exception) {
@@ -185,7 +184,7 @@ fun TtkCalculatorScreen() {
       ) {
         Column(modifier = Modifier.padding(16.dp)) {
           Text(
-            text = "Punishment is ${ttkResult.punishmentMs} ms",
+            text = "Punishment is ${ttkResult.punishment} ms",
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 12.dp)
           )
