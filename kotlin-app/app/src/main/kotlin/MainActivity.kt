@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
@@ -76,7 +78,8 @@ fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResu
 
 @Composable
 fun TtkCalculatorScreen() {
-  val damageInputs = remember { mutableStateListOf(*Array(bodyParts.size) { "" }) }
+  val damageInputs = remember { mutableStateListOf(*Array(bodyParts.size) { TextFieldValue("") }) }
+
   var dropInput by remember { mutableStateOf("") }
   var rateInput by remember { mutableStateOf("") }
 
@@ -106,14 +109,20 @@ fun TtkCalculatorScreen() {
           Row {
             IconButton(
               onClick = {
-                damageInputs[index - 1] = damageInputs[index]
+                val textToCopy = damageInputs[index].text
+                damageInputs[index - 1] = TextFieldValue(
+                  text = textToCopy, selection = TextRange(textToCopy.length)
+                )
                 focusRequesters[index - 1].requestFocus()
               },
               enabled = index > 0
             ) { Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Up") }
             IconButton(
               onClick = {
-                damageInputs[index + 1] = damageInputs[index]
+                val textToCopy = damageInputs[index].text
+                damageInputs[index + 1] = TextFieldValue(
+                  text = textToCopy, selection = TextRange(textToCopy.length)
+                )
                 focusRequesters[index + 1].requestFocus()
               },
               enabled = index < bodyParts.lastIndex
@@ -145,7 +154,7 @@ fun TtkCalculatorScreen() {
       onClick = {
         try {
           errorMessage = null
-          val damages = damageInputs.map { parseDamage(it) }
+          val damages = damageInputs.map { parseDamage(it.text) }
           val drops = dropInput.replace(",", ".")
                                .split("\\s+".toRegex())
                                .filter { it.isNotBlank() }
