@@ -65,7 +65,7 @@ fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResu
 
   fun getTtk(damage: Float, drop: Float): String {
     val rawTtk = ((ceil((100f / damage / drop).toDouble()) - 1) * punish)
-    return String.format(Locale.US, "%.3f", rawTtk)
+    return String.format(Locale.US, "%.2f", rawTtk)
   }
 
   val resultRows = bodyParts.zip(damages).map { (part, damage) ->
@@ -73,8 +73,8 @@ fun calculateTtk(damages: List<Float>, drops: List<Float>, rate: Float): TtkResu
     TtkRow(partName = part, ttks = ttksForPart)
   }
 
-  val fdrops = drops.map { String.format(Locale.US, "%.3f", it) }
-  val fpunish = String.format(Locale.US, "%.3f", punish)
+  val fpunish = String.format(Locale.US, "%.2f", punish)
+  val fdrops = drops.map { "${it}" }
 
   return TtkResult(punishment = fpunish, drops = fdrops, rows = resultRows)
 }
