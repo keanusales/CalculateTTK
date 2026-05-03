@@ -159,7 +159,7 @@ fun TtkCalculatorScreen() {
           errorMessage = null
           val damages = damageInputs.map { parseDamage(it.text) }
           val drops = parseDrops(dropInput)
-          val rate = rateInput.toFloat()
+          val rate = rateInput.replace(",", ".").toFloat()
           result = calculateTtk(damages, drops, rate)
         } catch (e: Exception) {
           errorMessage = "Erro nos dados: ${e.message}"
