@@ -9,7 +9,11 @@ plugins {
 android {
     namespace = "com.delta.ttk"
     buildToolsVersion = "36.1.0"
-    compileSdk = 36
+    compileSdk {
+        version = release(36) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "com.delta.ttk"
