@@ -16,6 +16,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
     }
     buildFeatures {
         compose = true
@@ -59,7 +62,8 @@ android {
                 "DebugProbesKt.bin",
                 "META-INF/*.version",
                 "**/version-control-info.textproto",
-                "**/app-metadata.properties"
+                "**/app-metadata.properties",
+                "**/LICENSE.txt"
             )
         }
     }
