@@ -38,11 +38,11 @@ android {
         create("release") {
             val keystoreProperties = Properties()
             val keystorePropertiesFile = rootProject.file("local.properties")
-            
+
             if (keystorePropertiesFile.exists()) {
                 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
             }
-            
+
             storeFile = file("../delta-release-key.jks")
             storePassword = keystoreProperties.getProperty("KEYSTORE_PASSWORD") ?: ""
             keyAlias = keystoreProperties.getProperty("KEY_ALIAS") ?: ""
@@ -78,7 +78,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.core:core-ktx:1.19.0")
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation(platform("androidx.compose:compose-bom:2026.05.01"))
     implementation("androidx.compose.material:material-icons-core")
