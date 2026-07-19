@@ -231,6 +231,8 @@ fn main() {
   wind.end();
   wind.show();
 
+  let mut first_input = damage_inputs[0].clone();
+
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
       let rate: f64 = rate_input.value().parse().map_err(|_| "Firerate inválido.".to_string())?;
@@ -256,7 +258,11 @@ fn main() {
       Ok(table) => buf.set_text(&table),
       Err(e) => buf.set_text(&format!("Erro:\n{}", e)),
     }
+
+    let _ = first_input.take_focus();
   });
+
+  let _ = damage_inputs[0].take_focus();
 
   app.run().unwrap();
 }
