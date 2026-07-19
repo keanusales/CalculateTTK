@@ -6,7 +6,7 @@ use fltk::{
 };
 use std::f64;
 
-const PARTS: [&str; 7] = ["Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs"];
+const parts: [&str; 7] = ["Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs"];
 
 // Lógica de geração da tabela ASCII traduzida do seu código Python
 fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, String> {
@@ -26,7 +26,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   rows.push(header);
 
   for (i, &damage) in damages.iter().enumerate() {
-    let mut row = vec![PARTS[i].to_string()];
+    let mut row = vec![parts[i].to_string()];
     for &drop in drops {
       let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
       row.push(format!("{ttk:.1}"));
@@ -53,7 +53,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let mut output: Vec<String> = Vec::new();
   output.push(line(tlhs, hor, trhs));
 
-  let total_width: usize = (3 * widths.len() + widths.iter().sum::<usize>() - 1);
+  let total_width: usize = 3 * widths.len() + widths.iter().sum::<usize>() - 1;
   let title_inner = format!(" Punishment is {:.1} ms ", punish);
   let pad_len = total_width.saturating_sub(title_inner.chars().count());
   let half_pad = pad_len / 2;
@@ -101,9 +101,9 @@ fn main() {
 
   let mut damage_inputs = Vec::new();
   let mut y = 10;
-  
+
   // Inputs de Dano
-  for part in PARTS.iter() {
+  for part in parts.iter() {
     let mut frame = Frame::default()
       .with_pos(10, y)
       .with_size(150, 25)
