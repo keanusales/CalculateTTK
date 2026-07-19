@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use fltk::{app, button::Button, enums::{Align, Font},
+use fltk::{app, button::Button, enums::{Align, Font, Event, Key},
   frame::Frame, input::Input, window::Window, prelude::*};
 use regex::Regex;
 use std::f64;
@@ -54,7 +54,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let mut output: Vec<String> = vec![line(tlhs, hor, trhs)];
 
   let total_width: usize = 3 * widths.len() + widths.iter().sum::<usize>() - 1;
-  let title_inner = format!(" Punishment is {:.1} ms ", punish);
+  let title_inner = format!(" Punishment is {punish:.1} ms ");
   let pad_len = total_width.saturating_sub(title_inner.chars().count());
   let half_pad = pad_len / 2;
 
@@ -144,16 +144,16 @@ fn main() {
     } else { None };
 
     current.handle(move |widget, event| {
-      if event == fltk::enums::Event::KeyDown {
+      if event == Event::KeyDown {
         match app::event_key() {
-          fltk::enums::Key::Down => {
+          Key::Down => {
             if let Some(mut target) = down_target.clone() {
               target.set_value(&widget.value());
               let _ = target.take_focus();
               return true;
             }
           }
-          fltk::enums::Key::Up => {
+          Key::Up => {
             if let Some(mut target) = up_target.clone() {
               target.set_value(&widget.value());
               let _ = target.take_focus();
@@ -187,9 +187,9 @@ fn main() {
     .with_size(345, 30).with_label("Calculate TTK for this weapon");
 
   calc_btn.handle(|button, event| {
-    if event == fltk::enums::Event::KeyDown {
+    if event == Event::KeyDown {
       match app::event_key() {
-        fltk::enums::Key::KPEnter | fltk::enums::Key::Enter => {
+        Key::KPEnter | Key::Enter => {
           button.do_callback();
           return true;
         }
@@ -231,7 +231,7 @@ fn main() {
 
     match process() {
       Ok(result_table) => result_label.set_label(&result_table),
-      Err(error) => result_label.set_label(&format!("An internal error occurred:\n{error}"))
+      Err(error) => result_label.set_label(&format!("An error occurred:\n{error}"))
     }
 
     let (text_w, text_h) = result_label.measure_label();
