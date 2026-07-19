@@ -5,10 +5,11 @@ edition = "2024"
 
 [dependencies]
 fltk = "^1.5"
+regex = "^1.13"
 
 # Mágica para deixar o executável incrivelmente pequeno:
 [profile.release]
-opt-level = 'z'
+opt-level = 3
 lto = true
 strip = true
 codegen-units = 1
