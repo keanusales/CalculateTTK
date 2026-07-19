@@ -34,15 +34,15 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let mut rows: Vec<Vec<String>> = Vec::new();
 
   let mut header = vec!["Part/Drop".to_string()];
-  for drop in drops { header.push(format!("{}x", drop)); }
+  for drop in drops { header.push(format!("{drop}x")); }
   rows.push(header);
 
   for (i, &damage) in damages.iter().enumerate() {
     let mut row = vec![PARTS[i].to_string()];
     for &drop in drops {
       let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
-        row.push(format!("{:.1}", ttk));
-      }
+      row.push(format!("{ttk:.1}"));
+    }
     rows.push(row);
   }
 
@@ -54,50 +54,50 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     }
   }
 
-  let hor = "═"; let ver = "║"; let tlhs = "╔"; let trhs = "╗"; let blhs = "╚"; let brhs = "╝";
-  let tjoin = "╦"; let bjoin = "╩"; let ljoin = "╠"; let mjoin = "╬"; let rjoin = "╣";
+  let (hor, ver, tlhs, trhs, blhs, brhs) = ("═", "║", "╔", "╗", "╚", "╝");
+  let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
 
   let line = |lhs: &str, join: &str, rhs: &str| -> String {
     let segments: Vec<String> = widths.iter().map(|w| hor.repeat(*w + 2)).collect();
     format!("{}{}{}", lhs, segments.join(join), rhs)
   };
 
-  let mut output = String::new();
-  output.push_str(&line(tlhs, hor, trhs)); output.push('\n');
+  let mut output: Vec<String> = Vec::new();
+  output.push(line(tlhs, hor, trhs));
 
-  let total_width: usize = widths.iter().sum::<usize>() + (3 * widths.len()) - 1;
+  let total_width: usize = (3 * widths.len() + widths.iter().sum::<usize>() - 1);
   let title_inner = format!(" Punishment is {:.1} ms ", punish);
   let pad_len = total_width.saturating_sub(title_inner.chars().count());
-  let (left_pad, right_pad) = (pad_len / 2, pad_len - (pad_len / 2));
-  
-  let pad_str_l = " ".repeat(left_pad);
-  let pad_str_r = " ".repeat(right_pad);
-  // Linha de título com conversão explícita
-  let title_line = format!("{}{}═{}{}═{}{}", tlhs, pad_str_l, title_inner, pad_str_r, trhs, "\n");
-  // Substituindo pelo formato correto compatível com as bordas
-  let title_line_fixed = format!("{}{}{}{}{}", ver, pad_str_l, title_inner, pad_str_r, ver);
-    
-  output.push_str(&title_line_fixed); output.push('\n');
-  output.push_str(&line(ljoin, tjoin, rjoin)); output.push('\n');
+  let half_pad = pad_len / 2;
+
+  let (pad_l, pad_r) = (hor.repeat(half_pad), hor.repeat(pad_len - half_pad));
+  let title_line = format!("{ljoin}{pad_l}{title_inner}{pad_r}{rjoin}");
+
+  output.push(title_line);
+  output.push(line(ljoin, tjoin, rjoin));
 
   for (i, row) in rows.iter().enumerate() {
     let padded_cells: Vec<String> = row.iter().enumerate()
-      .map(|(j, cell)| format!(" {:width$} ", cell, width = widths[j]))
+      .map(|(j, cell)| format!(" {cell:width$} ", width = widths[j]))
       .collect();
-    output.push_str(&format!("{}{}{}", ver, padded_cells.join(ver), ver)); output.push('\n');
+    output.push(format!("{}{}{}", ver, padded_cells.join(ver), ver));
 
-    if i == 0 {
-      output.push_str(&line(ljoin, mjoin, rjoin)); output.push('\n');
+    if i != (rows.len() - 1) {
+      output.push(line(ljoin, mjoin, rjoin));
     }
   }
 
-  output.push_str(&line(blhs, bjoin, brhs));
-  Ok(output)
+  output.push(line(blhs, bjoin, brhs));
+  Ok(output.join("\n"))
 }
 
 fn main() {
-  let app = app::App::default().with_scheme(app::Scheme::Gtk);
-  let mut wind = Window::default().with_size(820, 350).with_label("Delta Force TTK Calculator");
+  let app = app::App::default()
+    .with_scheme(app::Scheme::Gtk);
+
+  let mut wind = Window::default()
+    .with_size(820, 350)
+    .with_label("Delta Force TTK Calculator");
 
   let mut damage_inputs = Vec::new();
   let mut y = 10;
@@ -107,14 +107,14 @@ fn main() {
     let mut frame = Frame::default()
       .with_pos(10, y)
       .with_size(150, 25)
-      .with_label(&format!("Damage for {}:", part));
+      .with_label(&format!("Damage for {part}:"));
 
-    let inp = Input::default()
+    let input = Input::default()
       .with_pos(170, y)
       .with_size(100, 25);
 
     frame.set_align(Align::Left | Align::Inside);
-    damage_inputs.push(inp);
+    damage_inputs.push(input);
     y += 30;
   }
 
@@ -123,7 +123,6 @@ fn main() {
     .with_pos(10, y)
     .with_size(150, 25)
     .with_label("Damage drops (spaces):");
-
   frame.set_align(Align::Left | Align::Inside);
 
   let drop_input = Input::default()
@@ -166,7 +165,7 @@ fn main() {
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
       let rate: f64 = rate_input.value().parse().map_err(|_| "Firerate inválido.".to_string())?;
-      
+
       let mut damages = Vec::new();
       for inp in &damage_inputs {
         if inp.value().trim().is_empty() { return Err("Preencha todos os danos.".into()); }
