@@ -123,7 +123,8 @@ def main_interface(root: Tk) -> None:
     entry2.bind("<Up>", lambda w, n = entry1: copy_text(w.widget, n))
 
   row += 1
-  calcbtn = Button(frame1, text = "Calculate", command = calculate)
+  btn_text = "Calculate TTK for this weapon"
+  calcbtn = Button(frame1, text = btn_text, command = calculate)
   calcbtn.grid(row = row, column = 0, columnspan = 2, sticky = "ew")
   calcbtn.bind("<Return>", lambda w: focus_next(w.widget))
 
