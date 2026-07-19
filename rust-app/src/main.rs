@@ -5,10 +5,10 @@ use fltk::{app, button::Button, enums::{Align, Font},
 use regex::Regex;
 use std::f64;
 
-const PARTS: [&str; 7] = ["Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs"];
-const FIRERATE_ERROR: &str = "Ensure the firerate value are positive.";
+const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
 const DROP_ERROR: &str = "Ensure all drops values are between 0 and 1 (0, 1].";
-const DAMAGE_ERROR: &str = "Ensure all damages values are settled and positive.";
+const DAMAGE_ERROR: &str = "Ensure all damages values are set and positive.";
+const FIRERATE_ERROR: &str = "Ensure the firerate value is positive.";
 
 fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, String> {
   if rate <= 0.0 { return Err(FIRERATE_ERROR.into()); }
@@ -38,8 +38,8 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let cols = rows[0].len();
   let mut widths = vec![0; cols];
   for row in &rows {
-    for (j, cell) in row.iter().enumerate() {
-      widths[j] = widths[j].max(cell.chars().count());
+    for (ii, cell) in row.iter().enumerate() {
+      widths[ii] = widths[ii].max(cell.chars().count());
     }
   }
 
@@ -66,7 +66,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 
   for (i, row) in rows.iter().enumerate() {
     let padded_cells: Vec<String> = row.iter().enumerate()
-      .map(|(j, cell)| format!(" {cell:width$} ", width = widths[j]))
+      .map(|(ii, cell)| format!(" {cell:width$} ", width = widths[ii]))
       .collect();
     output.push(format!("{}{}{}", ver, padded_cells.join(ver), ver));
 
@@ -78,7 +78,9 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 }
 
 fn parse_damage(s: &str) -> Result<f64, String> {
-  let s = s.replace(" ", "").replace(",", ".");
+  let mut s = s.replace(",", ".");
+  s.retain(|c| !c.is_whitespace());
+
   if let Some((a, b)) = s.split_once('*') {
     let n1 = a.parse::<f64>().map_err(|_| format!("Invalid value: {a}"))?;
     let n2 = b.parse::<f64>().map_err(|_| format!("Invalid value: {b}"))?;
@@ -90,7 +92,6 @@ fn parse_damage(s: &str) -> Result<f64, String> {
 
 fn validate_input(input: &mut fltk::input::Input, pattern: &str) {
   let re = Regex::new(&format!("^{pattern}$")).unwrap();
-
   let mut last_valid = input.value();
 
   input.set_trigger(fltk::enums::CallbackTrigger::Changed);
@@ -100,7 +101,7 @@ fn validate_input(input: &mut fltk::input::Input, pattern: &str) {
     if current.is_empty() || re.is_match(&current) {
       last_valid = current;
     } else {
-      let pos = i.position() - 1;
+      let pos = (i.position() - 1).max(0);
       i.set_value(&last_valid);
       let _ = i.set_position(pos);
     }
@@ -113,23 +114,21 @@ fn main() {
   app::set_font(Font::Helvetica);
 
   let mut window = Window::default()
-    .with_size(360, 350).with_label("Delta Force TTK Calculator");
+    .with_size(365, 350).with_label("Delta Force TTK Calculator");
 
   let mut damage_inputs = Vec::new();
   let mut row_y = 10;
 
   for part in PARTS.iter() {
     let mut frame = Frame::default().with_pos(10, row_y)
-      .with_size(230, 25).with_label(&format!("Damage value for {part}:"));
-
+      .with_size(235, 25).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
 
-    let mut input = Input::default().with_pos(250, row_y).with_size(100, 25);
-
+    let mut input = Input::default().with_pos(255, row_y).with_size(100, 25);
     validate_input(&mut input, r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?");
+    row_y += 30;
 
     damage_inputs.push(input);
-    row_y += 30;
   }
 
   let num_inputs = damage_inputs.len();
@@ -169,25 +168,23 @@ fn main() {
   }
 
   let mut frame = Frame::default().with_pos(10, row_y)
-    .with_size(230, 25).with_label("Damage drops (space separated):");
+    .with_size(235, 25).with_label("Damage drops (space separated):");
   frame.set_align(Align::Center | Align::Inside);
 
-  let mut drop_input = Input::default().with_pos(250, row_y).with_size(100, 25);
-  row_y += 30;
-
+  let mut drop_input = Input::default().with_pos(255, row_y).with_size(100, 25);
   validate_input(&mut drop_input, r"1 ?((0?[.,]\d*) ?)*");
+  row_y += 30;
 
   let mut frame = Frame::default().with_pos(10, row_y)
-    .with_size(230, 25).with_label("Weapon firerate (shots per minute):");
+    .with_size(235, 25).with_label("Weapon firerate (shots per minute):");
   frame.set_align(Align::Center | Align::Inside);
 
-  let mut rate_input = Input::default().with_pos(250, row_y).with_size(100, 25);
+  let mut rate_input = Input::default().with_pos(255, row_y).with_size(100, 25);
+  validate_input(&mut rate_input, r"\d+[.,]?\d*");
   row_y += 30;
 
-  validate_input(&mut rate_input, r"\d+[.,]?\d*");
-
   let mut calc_btn = Button::default().with_pos(10, row_y)
-    .with_size(340, 30).with_label("Calculate TTK for this weapon");
+    .with_size(345, 30).with_label("Calculate TTK for this weapon");
 
   calc_btn.handle(|button, event| {
     if event == fltk::enums::Event::KeyDown {
@@ -202,8 +199,7 @@ fn main() {
     false
   });
 
-  let mut result_label = Frame::default().with_pos(370, 10).with_size(0, 0);
-
+  let mut result_label = Frame::default().with_pos(375, 10).with_size(0, 0);
   result_label.set_label_font(Font::Courier);
   result_label.set_align(Align::Center | Align::Inside);
 
@@ -214,7 +210,8 @@ fn main() {
 
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
-      let rate: f64 = rate_input.value().parse().map_err(|_| FIRERATE_ERROR.to_string())?;
+      let rate: f64 = rate_input.value()
+        .replace(",", ".").parse().map_err(|_| FIRERATE_ERROR.to_string())?;
 
       let mut damages = Vec::new();
       for input in &damage_inputs {
@@ -238,9 +235,9 @@ fn main() {
     }
 
     let (text_w, text_h) = result_label.measure_label();
-    result_label.resize(370, 10, text_w, text_h);
+    result_label.resize(375, 10, text_w, text_h);
 
-    let (new_width, new_height) = (370 + text_w + 20, 350.max(text_h + 20));
+    let (new_width, new_height) = (375 + text_w + 20, 350.max(text_h + 20));
     window_clone.set_size(new_width, new_height);
 
     let _ = first_input.take_focus();
