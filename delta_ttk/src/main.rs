@@ -1,14 +1,14 @@
-#![windows_subsystem = "windows"] // Oculta o terminal no Windows
+#![windows_subsystem = "windows"]
 
 use fltk::{
   app, button::Button, enums::{Align, Font}, frame::Frame, input::Input,
   text::{TextBuffer, TextDisplay}, window::Window, prelude::*,
 };
 use std::f64;
+use regex::Regex;
 
-const parts: [&str; 7] = ["Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs"];
+const PARTS: [&str; 7] = ["Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs"];
 
-// Lógica de geração da tabela ASCII traduzida do seu código Python
 fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, String> {
   if rate <= 0.0 { return Err("A taxa de tiro (firerate) deve ser positiva.".into()); }
   if drops.is_empty() || !drops.iter().all(|&d| d > 0.0 && d <= 1.0) {
@@ -26,7 +26,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   rows.push(header);
 
   for (i, &damage) in damages.iter().enumerate() {
-    let mut row = vec![parts[i].to_string()];
+    let mut row = vec![PARTS[i].to_string()];
     for &drop in drops {
       let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
       row.push(format!("{ttk:.1}"));
@@ -79,7 +79,6 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   Ok(output.join("\n"))
 }
 
-// Faz o parse do dano (ex: "35", "35.5", "35 * 1.5", "35*1,5")
 fn parse_damage(s: &str) -> Result<f64, String> {
   let s = s.replace(" ", "").replace(",", ".");
   if let Some((a, b)) = s.split_once('*') {
@@ -89,6 +88,25 @@ fn parse_damage(s: &str) -> Result<f64, String> {
   } else {
     s.parse::<f64>().map_err(|_| format!("Valor inválido: {s}"))
   }
+}
+
+fn apply_validation(input: &mut fltk::input::Input, pattern: &str) {
+  let re = Regex::new(&format!("^{pattern}$")).unwrap();
+
+  let mut last_valid = input.value();
+
+  input.set_trigger(fltk::enums::CallbackTrigger::Changed);
+  input.set_callback(move |i| {
+    let current = i.value();
+
+    if current.is_empty() || re.is_match(&current) {
+      last_valid = current;
+    } else {
+      let pos = i.position() - 1;
+      i.set_value(&last_valid);
+      let _ = i.set_position(pos);
+    }
+  });
 }
 
 fn main() {
@@ -102,66 +120,117 @@ fn main() {
   let mut damage_inputs = Vec::new();
   let mut y = 10;
 
-  // Inputs de Dano
-  for part in parts.iter() {
+  for part in PARTS.iter() {
     let mut frame = Frame::default()
       .with_pos(10, y)
       .with_size(150, 25)
       .with_label(&format!("Damage for {part}:"));
+    frame.set_align(Align::Left | Align::Inside);
 
-    let input = Input::default()
+    let mut input = Input::default()
       .with_pos(170, y)
       .with_size(100, 25);
 
-    frame.set_align(Align::Left | Align::Inside);
+    apply_validation(&mut input, r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?");
+
     damage_inputs.push(input);
     y += 30;
   }
 
-  // Input de Drops
+  let num_inputs = damage_inputs.len();
+  for i in 0..num_inputs {
+    let mut current = damage_inputs[i].clone();
+
+    let up_target = if i > 0 {
+      Some(damage_inputs[i - 1].clone())
+    } else {
+      None
+    };
+    let down_target = if i < num_inputs - 1 {
+      Some(damage_inputs[i + 1].clone())
+    } else {
+      None
+    };
+
+    current.handle(move |w, ev| {
+      if ev == fltk::enums::Event::KeyDown {
+        match app::event_key() {
+          fltk::enums::Key::Down => {
+            if let Some(mut target) = down_target.clone() {
+              target.set_value(&w.value());
+              let _ = target.take_focus();
+              return true;
+            }
+          }
+          fltk::enums::Key::Up => {
+            if let Some(mut target) = up_target.clone() {
+              target.set_value(&w.value());
+              let _ = target.take_focus();
+              return true;
+            }
+          }
+          _ => {}
+        }
+      }
+      false
+    });
+  }
+
   let mut frame = Frame::default()
     .with_pos(10, y)
     .with_size(150, 25)
     .with_label("Damage drops (spaces):");
   frame.set_align(Align::Left | Align::Inside);
 
-  let drop_input = Input::default()
+  let mut drop_input = Input::default()
     .with_pos(170, y)
     .with_size(100, 25);
-
   y += 30;
 
-  // Input de Firerate
+  apply_validation(&mut drop_input, r"1 ?((0?[.,]\d*) ?)*");
+
   let mut frame = Frame::default()
     .with_pos(10, y)
     .with_size(150, 25)
     .with_label("Firerate (SPM):");
   frame.set_align(Align::Left | Align::Inside);
 
-  let rate_input = Input::default()
+  let mut rate_input = Input::default()
     .with_pos(170, y)
     .with_size(100, 25);
   y += 30;
 
-  // Botão de Calcular
+  apply_validation(&mut rate_input, r"\d+\.?\d*");
+
   let mut calc_btn = Button::default()
     .with_pos(10, y)
     .with_size(260, 35)
     .with_label("Calculate");
 
-  // Display de Resultado (Tabela)
+  calc_btn.handle(|b, ev| {
+    if ev == fltk::enums::Event::KeyDown {
+      match app::event_key() {
+        fltk::enums::Key::KPEnter | fltk::enums::Key::Enter => {
+          b.do_callback();
+          return true;
+        }
+        _ => {}
+      }
+    }
+    false
+  });
+
   let mut out_disp = TextDisplay::default()
     .with_pos(290, 10)
     .with_size(520, 330);
 
-  out_disp.set_text_font(Font::Courier); // Fonte monoespaçada obrigatória para a tabela
+  out_disp.set_text_font(Font::Courier);
   let mut buf = TextBuffer::default();
   out_disp.set_buffer(buf.clone());
 
   wind.end();
   wind.show();
 
-  // Lógica do botão
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
       let rate: f64 = rate_input.value().parse().map_err(|_| "Firerate inválido.".to_string())?;
@@ -177,8 +246,8 @@ fn main() {
         .map(|s| s.parse::<f64>().map_err(|_| "Drop inválido.".to_string()))
         .collect::<Result<Vec<_>, _>>()?;
 
-      if drops.is_empty() { drops = vec![1.0]; } // Fallback
-      drops.sort_by(|a, b| b.partial_cmp(a).unwrap()); // Ordena decrescente
+      if drops.is_empty() { drops = vec![1.0]; }
+      drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
 
       get_ttk_table(&damages, &drops, rate)
     };
