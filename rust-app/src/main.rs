@@ -211,7 +211,7 @@ fn main() {
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
       let rate: f64 = rate_input.value()
-        .replace(",", ".").parse().map_err(|_| FIRERATE_ERROR.to_string())?;
+        .replace(",", ".").parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
 
       let mut damages = Vec::new();
       for input in &damage_inputs {
@@ -221,7 +221,7 @@ fn main() {
 
       let mut drops: Vec<f64> = drop_input.value().replace(",", ".").split_whitespace()
         .map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.to_string()))
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect::<Result<Vec<f64>, String>>()?;
 
       if drops.is_empty() { drops = vec![1.0]; }
       drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
