@@ -85,7 +85,7 @@ def main_interface(root: Tk) -> None:
 
   damage_parser = re_compile(r"(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)")
   def parse_damage(damage_value: str) -> float:
-    stripped_value = damage_value.replace(" ", "").replace(",", ".")
+    stripped_value = "".join(damage_value.split()).replace(",", ".")
     fullmatch = damage_parser.fullmatch(stripped_value)
     if fullmatch is None: return float(stripped_value)
     first_value, second_value = fullmatch.groups()
