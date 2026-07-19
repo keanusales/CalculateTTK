@@ -1,21 +1,22 @@
 #![windows_subsystem = "windows"]
 
-use fltk::{
-  app, button::Button, enums::{Align, Font}, frame::Frame, input::Input,
-  text::{TextBuffer, TextDisplay}, window::Window, prelude::*,
-};
-use std::f64;
+use fltk::{app, button::Button, enums::{Align, Font},
+  frame::Frame, input::Input, window::Window, prelude::*};
 use regex::Regex;
+use std::f64;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs"];
+const FIRERATE_ERROR: &str = "Ensure the firerate value are positive.";
+const DROP_ERROR: &str = "Ensure all drops values are between 0 and 1 (0, 1].";
+const DAMAGE_ERROR: &str = "Ensure all damages values are settled and positive.";
 
 fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, String> {
-  if rate <= 0.0 { return Err("A taxa de tiro (firerate) deve ser positiva.".into()); }
+  if rate <= 0.0 { return Err(FIRERATE_ERROR.into()); }
   if drops.is_empty() || !drops.iter().all(|&d| d > 0.0 && d <= 1.0) {
-    return Err("Todos os drops devem estar entre 0 e 1.".into());
+    return Err(DROP_ERROR.into());
   }
   if damages.is_empty() || !damages.iter().all(|&d| d > 0.0) {
-    return Err("Todos os danos devem ser positivos.".into());
+    return Err(DAMAGE_ERROR.into());
   }
 
   let punish = 60000.0 / rate;
@@ -50,8 +51,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     format!("{}{}{}", lhs, segments.join(join), rhs)
   };
 
-  let mut output: Vec<String> = Vec::new();
-  output.push(line(tlhs, hor, trhs));
+  let mut output: Vec<String> = vec![line(tlhs, hor, trhs)];
 
   let total_width: usize = 3 * widths.len() + widths.iter().sum::<usize>() - 1;
   let title_inner = format!(" Punishment is {:.1} ms ", punish);
@@ -70,9 +70,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
       .collect();
     output.push(format!("{}{}{}", ver, padded_cells.join(ver), ver));
 
-    if i != (rows.len() - 1) {
-      output.push(line(ljoin, mjoin, rjoin));
-    }
+    if i != (rows.len() - 1) { output.push(line(ljoin, mjoin, rjoin)); }
   }
 
   output.push(line(blhs, bjoin, brhs));
@@ -82,11 +80,11 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 fn parse_damage(s: &str) -> Result<f64, String> {
   let s = s.replace(" ", "").replace(",", ".");
   if let Some((a, b)) = s.split_once('*') {
-    let n1 = a.parse::<f64>().map_err(|_| format!("Valor inválido: {a}"))?;
-    let n2 = b.parse::<f64>().map_err(|_| format!("Valor inválido: {b}"))?;
+    let n1 = a.parse::<f64>().map_err(|_| format!("Invalid value: {a}"))?;
+    let n2 = b.parse::<f64>().map_err(|_| format!("Invalid value: {b}"))?;
     Ok(n1 * n2)
   } else {
-    s.parse::<f64>().map_err(|_| format!("Valor inválido: {s}"))
+    s.parse::<f64>().map_err(|_| format!("Invalid value: {s}"))
   }
 }
 
@@ -110,31 +108,26 @@ fn apply_validation(input: &mut fltk::input::Input, pattern: &str) {
 }
 
 fn main() {
-  let app = app::App::default()
-    .with_scheme(app::Scheme::Gtk);
+  let delta_app = app::App::default().with_scheme(app::Scheme::Gtk);
 
-  let mut wind = Window::default()
-    .with_size(820, 350)
-    .with_label("Delta Force TTK Calculator");
+  let mut window = Window::default()
+    .with_size(360, 350).with_label("Delta Force TTK Calculator");
 
   let mut damage_inputs = Vec::new();
-  let mut y = 10;
+  let mut row_y = 10;
 
   for part in PARTS.iter() {
-    let mut frame = Frame::default()
-      .with_pos(10, y)
-      .with_size(150, 25)
-      .with_label(&format!("Damage for {part}:"));
-    frame.set_align(Align::Left | Align::Inside);
+    let mut frame = Frame::default().with_pos(10, row_y)
+      .with_size(230, 25).with_label(&format!("Damage value for {part}:"));
 
-    let mut input = Input::default()
-      .with_pos(170, y)
-      .with_size(100, 25);
+    frame.set_align(Align::Center | Align::Inside);
+
+    let mut input = Input::default().with_pos(250, row_y).with_size(100, 25);
 
     apply_validation(&mut input, r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?");
 
     damage_inputs.push(input);
-    y += 30;
+    row_y += 30;
   }
 
   let num_inputs = damage_inputs.len();
@@ -143,28 +136,25 @@ fn main() {
 
     let up_target = if i > 0 {
       Some(damage_inputs[i - 1].clone())
-    } else {
-      None
-    };
+    } else { None };
+
     let down_target = if i < num_inputs - 1 {
       Some(damage_inputs[i + 1].clone())
-    } else {
-      None
-    };
+    } else { None };
 
-    current.handle(move |w, ev| {
-      if ev == fltk::enums::Event::KeyDown {
+    current.handle(move |widget, event| {
+      if event == fltk::enums::Event::KeyDown {
         match app::event_key() {
           fltk::enums::Key::Down => {
             if let Some(mut target) = down_target.clone() {
-              target.set_value(&w.value());
+              target.set_value(&widget.value());
               let _ = target.take_focus();
               return true;
             }
           }
           fltk::enums::Key::Up => {
             if let Some(mut target) = up_target.clone() {
-              target.set_value(&w.value());
+              target.set_value(&widget.value());
               let _ = target.take_focus();
               return true;
             }
@@ -176,42 +166,32 @@ fn main() {
     });
   }
 
-  let mut frame = Frame::default()
-    .with_pos(10, y)
-    .with_size(150, 25)
-    .with_label("Damage drops (spaces):");
-  frame.set_align(Align::Left | Align::Inside);
+  let mut frame = Frame::default().with_pos(10, row_y)
+    .with_size(230, 25).with_label("Damage drops (space separated):");
+  frame.set_align(Align::Center | Align::Inside);
 
-  let mut drop_input = Input::default()
-    .with_pos(170, y)
-    .with_size(100, 25);
-  y += 30;
+  let mut drop_input = Input::default().with_pos(250, row_y).with_size(100, 25);
+  row_y += 30;
 
   apply_validation(&mut drop_input, r"1 ?((0?[.,]\d*) ?)*");
 
-  let mut frame = Frame::default()
-    .with_pos(10, y)
-    .with_size(150, 25)
-    .with_label("Firerate (SPM):");
-  frame.set_align(Align::Left | Align::Inside);
+  let mut frame = Frame::default().with_pos(10, row_y)
+    .with_size(230, 25).with_label("Weapon firerate (shots per minute):");
+  frame.set_align(Align::Center | Align::Inside);
 
-  let mut rate_input = Input::default()
-    .with_pos(170, y)
-    .with_size(100, 25);
-  y += 30;
+  let mut rate_input = Input::default().with_pos(250, row_y).with_size(100, 25);
+  row_y += 30;
 
-  apply_validation(&mut rate_input, r"\d+\.?\d*");
+  apply_validation(&mut rate_input, r"\d+[.,]?\d*");
 
-  let mut calc_btn = Button::default()
-    .with_pos(10, y)
-    .with_size(260, 35)
-    .with_label("Calculate");
+  let mut calc_btn = Button::default().with_pos(10, row_y)
+    .with_size(340, 30).with_label("Calculate TTK for this weapon");
 
-  calc_btn.handle(|b, ev| {
-    if ev == fltk::enums::Event::KeyDown {
+  calc_btn.handle(|button, event| {
+    if event == fltk::enums::Event::KeyDown {
       match app::event_key() {
         fltk::enums::Key::KPEnter | fltk::enums::Key::Enter => {
-          b.do_callback();
+          button.do_callback();
           return true;
         }
         _ => {}
@@ -220,32 +200,28 @@ fn main() {
     false
   });
 
-  let mut out_disp = TextDisplay::default()
-    .with_pos(290, 10)
-    .with_size(520, 330);
+  let mut result_label = Frame::default().with_pos(370, 10).with_size(0, 0);
 
-  out_disp.set_text_font(Font::Courier);
-  let mut buf = TextBuffer::default();
-  out_disp.set_buffer(buf.clone());
+  result_label.set_label_font(Font::Courier);
+  result_label.set_align(Align::Center | Align::Inside);
 
-  wind.end();
-  wind.show();
+  window.end(); window.show();
 
   let mut first_input = damage_inputs[0].clone();
+  let mut window_clone = window.clone();
 
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
-      let rate: f64 = rate_input.value().parse().map_err(|_| "Firerate inválido.".to_string())?;
+      let rate: f64 = rate_input.value().parse().map_err(|_| FIRERATE_ERROR.to_string())?;
 
       let mut damages = Vec::new();
-      for inp in &damage_inputs {
-        if inp.value().trim().is_empty() { return Err("Preencha todos os danos.".into()); }
-        damages.push(parse_damage(&inp.value())?);
+      for input in &damage_inputs {
+        if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.to_string()); }
+        damages.push(parse_damage(&input.value())?);
       }
 
-      let drop_str = drop_input.value().replace(",", ".");
-      let mut drops: Vec<f64> = drop_str.split_whitespace()
-        .map(|s| s.parse::<f64>().map_err(|_| "Drop inválido.".to_string()))
+      let mut drops: Vec<f64> = drop_input.value().replace(",", ".").split_whitespace()
+        .map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.to_string()))
         .collect::<Result<Vec<_>, _>>()?;
 
       if drops.is_empty() { drops = vec![1.0]; }
@@ -255,14 +231,18 @@ fn main() {
     };
 
     match process() {
-      Ok(table) => buf.set_text(&table),
-      Err(e) => buf.set_text(&format!("Erro:\n{}", e)),
+      Ok(result_table) => result_label.set_label(&result_table),
+      Err(error) => result_label.set_label(&format!("An internal error occurred:\n{error}"))
     }
+
+    let (text_w, text_h) = result_label.measure_label();
+    result_label.resize(370, 10, text_w, text_h);
+
+    let (new_width, new_height) = (370 + text_w + 20, 350.max(text_h + 20));
+    window_clone.set_size(new_width, new_height);
 
     let _ = first_input.take_focus();
   });
 
-  let _ = damage_inputs[0].take_focus();
-
-  app.run().unwrap();
+  delta_app.run().unwrap();
 }
