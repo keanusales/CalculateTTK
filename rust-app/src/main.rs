@@ -88,7 +88,7 @@ fn parse_damage(s: &str) -> Result<f64, String> {
   }
 }
 
-fn apply_validation(input: &mut fltk::input::Input, pattern: &str) {
+fn validate_input(input: &mut fltk::input::Input, pattern: &str) {
   let re = Regex::new(&format!("^{pattern}$")).unwrap();
 
   let mut last_valid = input.value();
@@ -109,6 +109,8 @@ fn apply_validation(input: &mut fltk::input::Input, pattern: &str) {
 
 fn main() {
   let delta_app = app::App::default().with_scheme(app::Scheme::Gtk);
+  app::background(240, 240, 240);
+  app::set_font(Font::Helvetica);
 
   let mut window = Window::default()
     .with_size(360, 350).with_label("Delta Force TTK Calculator");
@@ -124,7 +126,7 @@ fn main() {
 
     let mut input = Input::default().with_pos(250, row_y).with_size(100, 25);
 
-    apply_validation(&mut input, r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?");
+    validate_input(&mut input, r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?");
 
     damage_inputs.push(input);
     row_y += 30;
@@ -173,7 +175,7 @@ fn main() {
   let mut drop_input = Input::default().with_pos(250, row_y).with_size(100, 25);
   row_y += 30;
 
-  apply_validation(&mut drop_input, r"1 ?((0?[.,]\d*) ?)*");
+  validate_input(&mut drop_input, r"1 ?((0?[.,]\d*) ?)*");
 
   let mut frame = Frame::default().with_pos(10, row_y)
     .with_size(230, 25).with_label("Weapon firerate (shots per minute):");
@@ -182,7 +184,7 @@ fn main() {
   let mut rate_input = Input::default().with_pos(250, row_y).with_size(100, 25);
   row_y += 30;
 
-  apply_validation(&mut rate_input, r"\d+[.,]?\d*");
+  validate_input(&mut rate_input, r"\d+[.,]?\d*");
 
   let mut calc_btn = Button::default().with_pos(10, row_y)
     .with_size(340, 30).with_label("Calculate TTK for this weapon");
