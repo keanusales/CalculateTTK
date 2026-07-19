@@ -8,18 +8,6 @@ use std::f64;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Abdomen", "Arms", "Forearms", "Thighs", "Legs"];
 
-// Faz o parse do dano (ex: "35", "35.5", "35 * 1.5", "35*1,5")
-fn parse_damage(s: &str) -> Result<f64, String> {
-  let s = s.replace(" ", "").replace(",", ".");
-  if let Some((a, b)) = s.split_once('*') {
-    let n1 = a.parse::<f64>().map_err(|_| format!("Valor inválido: {a}"))?;
-    let n2 = b.parse::<f64>().map_err(|_| format!("Valor inválido: {b}"))?;
-    Ok(n1 * n2)
-  } else {
-    s.parse::<f64>().map_err(|_| format!("Valor inválido: {s}"))
-  }
-}
-
 // Lógica de geração da tabela ASCII traduzida do seu código Python
 fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, String> {
   if rate <= 0.0 { return Err("A taxa de tiro (firerate) deve ser positiva.".into()); }
@@ -89,6 +77,18 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 
   output.push(line(blhs, bjoin, brhs));
   Ok(output.join("\n"))
+}
+
+// Faz o parse do dano (ex: "35", "35.5", "35 * 1.5", "35*1,5")
+fn parse_damage(s: &str) -> Result<f64, String> {
+  let s = s.replace(" ", "").replace(",", ".");
+  if let Some((a, b)) = s.split_once('*') {
+    let n1 = a.parse::<f64>().map_err(|_| format!("Valor inválido: {a}"))?;
+    let n2 = b.parse::<f64>().map_err(|_| format!("Valor inválido: {b}"))?;
+    Ok(n1 * n2)
+  } else {
+    s.parse::<f64>().map_err(|_| format!("Valor inválido: {s}"))
+  }
 }
 
 fn main() {
