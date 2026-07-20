@@ -20,8 +20,9 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   }
 
   let punish = 60000.0 / rate;
-  let mut rows: Vec<Vec<String>> = Vec::new();
+  drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
 
+  let mut rows: Vec<Vec<String>> = Vec::new();
   let mut header = vec!["Part/Drop".to_string()];
   for drop in drops { header.push(format!("{drop}x")); }
   rows.push(header);
@@ -69,7 +70,6 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
       .map(|(ii, cell)| format!(" {cell:width$} ", width = widths[ii]))
       .collect();
     output.push(format!("{}{}{}", ver, padded_cells.join(ver), ver));
-
     if i != (rows.len() - 1) { output.push(line(ljoin, mjoin, rjoin)); }
   }
 
@@ -226,9 +226,6 @@ fn main() {
       let mut drops: Vec<f64> = drop_input.value().replace(",", ".")
         .split_whitespace().map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.to_string()))
         .collect::<Result<Vec<f64>, String>>()?;
-
-      if drops.is_empty() { return Err(DROP_ERROR.to_string()); }
-      drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
 
       get_ttk_table(&damages, &drops, rate)
     };
