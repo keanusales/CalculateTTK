@@ -1,7 +1,7 @@
 #![windows_subsystem = "windows"]
 
 use fltk::{app, button::Button, enums::{Align, Font, Event, Key, CallbackTrigger},
-  frame::Frame, input::Input, window::Window, image::PngImage, prelude::*};
+  frame::Frame, input::Input, window::Window, image::SvgImage, prelude::*};
 use regex::Regex;
 use std::f64;
 
@@ -51,7 +51,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     format!("{}{}{}", lhs, segments.join(join), rhs)
   };
 
-  let mut output: Vec<String> = vec![line(tlhs, hor, trhs)];
+  let mut output = vec![line(tlhs, hor, trhs)];
 
   let total_width: usize = 3 * widths.len() + widths.iter().sum::<usize>() - 1;
   let title_inner = format!(" Punishment is {punish:.1} ms ");
@@ -64,12 +64,13 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   output.push(title_line);
   output.push(line(ljoin, tjoin, rjoin));
 
+  let len_rows = rows.len() - 1;
   for (i, row) in rows.iter().enumerate() {
     let padded_cells: Vec<String> = row.iter().enumerate()
       .map(|(ii, cell)| format!(" {cell:width$} ", width = widths[ii]))
       .collect();
     output.push(format!("{}{}{}", ver, padded_cells.join(ver), ver));
-    if i != (rows.len() - 1) { output.push(line(ljoin, mjoin, rjoin)); }
+    if i != len_rows { output.push(line(ljoin, mjoin, rjoin)); }
   }
 
   output.push(line(blhs, bjoin, brhs));
@@ -115,7 +116,7 @@ fn main() {
   let mut window = Window::default()
     .with_size(365, 350).with_label("Delta Force TTK Calculator");
 
-  if let Ok(icon) = PngImage::from_data(include_bytes!("../icon.png")) {
+  if let Ok(icon) = SvgImage::from_data(include_bytes!("../icon.png")) {
     window.set_icon(Some(icon));
   }
 
