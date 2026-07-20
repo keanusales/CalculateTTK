@@ -2,8 +2,8 @@
 
 use fltk::{app, button::Button, enums::{Align, Font, Event, Key, CallbackTrigger},
   frame::Frame, input::Input, window::Window, image::SvgImage, prelude::*};
+use std::{f64, iter::repeat, fmt::Write};
 use regex::Regex;
-use std::f64;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
 const DROP_ERROR: &str = "Ensure all drops values are between 0 and 1 (0, 1].";
@@ -19,62 +19,95 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     return Err(DAMAGE_ERROR.into());
   }
 
+  let part_drop = "Part/Drop";
   let punish = 60000.0 / rate;
-  let mut rows: Vec<Vec<String>> = Vec::new();
+  let num_cols = 1 + drops.len();
+  let mut widths = vec![0; num_cols];
 
-  let mut header = vec!["Part/Drop".to_string()];
-  for drop in drops { header.push(format!("{drop}x")); }
-  rows.push(header);
+  widths[0] = PARTS[..damages.len()].iter()
+    .map(|p| p.chars().count())
+    .max().unwrap_or(0).max(part_drop.len());
 
-  for (i, &damage) in damages.iter().enumerate() {
-    let mut row = vec![PARTS[i].to_string()];
-    for &drop in drops {
-      let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
-      row.push(format!("{ttk:.1}"));
-    }
-    rows.push(row);
+  let mut ttk_cache = Vec::with_capacity(damages.len() * drops.len());
+  let mut drop_cache = Vec::with_capacity(drops.len());
+
+  for (i, &drop) in drops.iter().enumerate() {
+    let drop_str = format!("{drop}x");
+    widths[i + 1] = drop_str.chars().count();
+    drop_cache.push(drop_str);
   }
 
-  let cols = rows[0].len();
-  let mut widths = vec![0; cols];
-  for row in &rows {
-    for (i, cell) in row.iter().enumerate() {
-      widths[i] = widths[i].max(cell.chars().count());
+  for &damage in damages {
+    for (i, &drop) in drops.iter().enumerate() {
+      let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
+      let ttk_str = format!("{ttk:.1}");
+      widths[i + 1] = widths[i + 1].max(ttk_str.chars().count());
+      ttk_cache.push(ttk_str);
     }
   }
 
   let (hor, ver, tlhs, trhs, blhs, brhs) = ("═", "║", "╔", "╗", "╚", "╝");
   let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
 
-  let line = |lhs: &str, join: &str, rhs: &str| -> String {
-    let segments: Vec<String> = widths.iter().map(|w| hor.repeat(*w + 2)).collect();
-    format!("{}{}{}", lhs, segments.join(join), rhs)
+  let mut final_buffer = String::with_capacity(2048);
+
+  let mut buffer_write = |
+    buffer: &mut String, lhs: &str, join: &str, rhs: &str
+  | {
+    buffer.push_str(lhs);
+    let len = widths.len();
+    for (i, &width) in widths.iter().enumerate() {
+      buffer.extend(repeat(hor).take(width + 2));
+      if i < len - 1 { buffer.push_str(join); }
+    }
+    buffer.push_str(rhs);
+    buffer.push('\n');
   };
 
-  let mut output = vec![line(tlhs, hor, trhs)];
+  buffer_write(&mut final_buffer, tlhs, hor, trhs);
 
-  let total_width: usize = 3 * widths.len() + widths.iter().sum::<usize>() - 1;
+  let total_width = 3 * num_cols + widths.iter().sum::<usize>() - 1;
   let title_inner = format!(" Punishment is {punish:.1} ms ");
   let pad_len = total_width.saturating_sub(title_inner.chars().count());
   let half_pad = pad_len / 2;
 
-  let (pad_l, pad_r) = (hor.repeat(half_pad), hor.repeat(pad_len - half_pad));
-  let title_line = format!("{ljoin}{pad_l}{title_inner}{pad_r}{rjoin}");
+  final_buffer.push_str(ljoin);
+  final_buffer.extend(repeat(hor).take(half_pad));
+  final_buffer.push_str(&title_inner);
+  final_buffer.extend(repeat(hor).take(pad_len - half_pad));
+  final_buffer.push_str(rjoin);
+  final_buffer.push('\n');
 
-  output.push(title_line);
-  output.push(line(ljoin, tjoin, rjoin));
+  buffer_write(&mut final_buffer, ljoin, tjoin, rjoin);
 
-  let len_rows = rows.len() - 1;
-  for (i, row) in rows.iter().enumerate() {
-    let padded_cells: Vec<String> = row.iter().enumerate()
-      .map(|(ii, cell)| format!(" {cell:width$} ", width = widths[ii]))
-      .collect();
-    output.push(format!("{}{}{}", ver, padded_cells.join(ver), ver));
-    if i != len_rows { output.push(line(ljoin, mjoin, rjoin)); }
+  write!(final_buffer, "{ver} {part_drop:width$} ", width = widths[0]);
+  for (i, drop_str) in drop_cache.iter().enumerate() {
+    write!(final_buffer, "{ver} {drop_str:width$} ", width = widths[i + 1]);
+  }
+  writeln!(final_buffer, "{ver}");
+
+  buffer_write(&mut final_buffer, ljoin, mjoin, rjoin);
+
+  let mut cache_iter = ttk_cache.into_iter();
+  let len_rows = damages.len() - 1;
+
+  for i in 0..damages.len() {
+    write!(final_buffer, "{ver} {:width$} ", PARTS[i], width = widths[0]);
+
+    for ii in 0..drops.len() {
+      let ttk_str = cache_iter.next().unwrap();
+      write!(final_buffer, "{ver} {ttk_str:width$} ", width = widths[ii + 1]);
+    }
+    writeln!(final_buffer, "{ver}");
+
+    if i != len_rows { 
+      buffer_write(&mut final_buffer, ljoin, mjoin, rjoin); 
+    }
   }
 
-  output.push(line(blhs, bjoin, brhs));
-  Ok(output.join("\n"))
+  buffer_write(&mut final_buffer, blhs, bjoin, brhs);
+
+  Ok(final_buffer)
 }
 
 fn parse_damage(s: &str) -> Result<f64, String> {
@@ -90,8 +123,7 @@ fn parse_damage(s: &str) -> Result<f64, String> {
   }
 }
 
-fn validate_input(input: &mut Input, pattern: &str) {
-  let re = Regex::new(&format!("^{pattern}$")).unwrap();
+fn validate_input(input: &mut Input, re: Regex) {
   let mut last_valid = input.value();
 
   input.set_trigger(CallbackTrigger::Changed);
@@ -103,7 +135,7 @@ fn validate_input(input: &mut Input, pattern: &str) {
     } else {
       let pos = (i.position() - 1).max(0);
       i.set_value(&last_valid);
-      let _ = i.set_position(pos);
+      i.set_position(pos);
     }
   });
 }
@@ -123,13 +155,14 @@ fn main() {
   let mut damage_inputs: Vec<Input> = Vec::new();
   let mut row_y = 10;
 
+  let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
   for part in PARTS.iter() {
     let mut frame = Frame::default().with_pos(10, row_y)
       .with_size(235, 25).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
 
     let mut input = Input::default().with_pos(255, row_y).with_size(100, 25);
-    validate_input(&mut input, r"\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?");
+    validate_input(&mut input, damage_re.clone());
     row_y += 30;
 
     damage_inputs.push(input);
@@ -153,14 +186,14 @@ fn main() {
           Key::Down => {
             if let Some(mut target) = down_target.clone() {
               target.set_value(&widget.value());
-              let _ = target.take_focus();
+              target.take_focus();
               return true;
             }
           }
           Key::Up => {
             if let Some(mut target) = up_target.clone() {
               target.set_value(&widget.value());
-              let _ = target.take_focus();
+              target.take_focus();
               return true;
             }
           }
@@ -175,16 +208,18 @@ fn main() {
     .with_size(235, 25).with_label("Damage drops (space separated):");
   frame.set_align(Align::Center | Align::Inside);
 
+  let drop_re = Regex::new(r"^1 ?((0?[.,]\d*) ?)*$").unwrap();
   let mut drop_input = Input::default().with_pos(255, row_y).with_size(100, 25);
-  validate_input(&mut drop_input, r"1 ?((0?[.,]\d*) ?)*");
+  validate_input(&mut drop_input, drop_re.clone());
   row_y += 30;
 
   let mut frame = Frame::default().with_pos(10, row_y)
     .with_size(235, 25).with_label("Weapon firerate (shots per minute):");
   frame.set_align(Align::Center | Align::Inside);
 
+  let rate_re = Regex::new(r"^\d+[.,]?\d*$").unwrap();
   let mut rate_input = Input::default().with_pos(255, row_y).with_size(100, 25);
-  validate_input(&mut rate_input, r"\d+[.,]?\d*");
+  validate_input(&mut rate_input, rate_re.clone());
   row_y += 30;
 
   let mut calc_btn = Button::default().with_pos(10, row_y)
@@ -242,7 +277,7 @@ fn main() {
     let (new_width, new_height) = (375 + text_w + 20, 350.max(text_h + 20));
     window_clone.set_size(new_width, new_height);
 
-    let _ = first_input.take_focus();
+    first_input.take_focus();
   });
 
   delta_app.run().unwrap();
