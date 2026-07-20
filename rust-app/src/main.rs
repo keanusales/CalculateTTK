@@ -20,9 +20,8 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   }
 
   let punish = 60000.0 / rate;
-  drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
-
   let mut rows: Vec<Vec<String>> = Vec::new();
+
   let mut header = vec!["Part/Drop".to_string()];
   for drop in drops { header.push(format!("{drop}x")); }
   rows.push(header);
@@ -227,6 +226,7 @@ fn main() {
         .split_whitespace().map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.to_string()))
         .collect::<Result<Vec<f64>, String>>()?;
 
+      drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
       get_ttk_table(&damages, &drops, rate)
     };
 
