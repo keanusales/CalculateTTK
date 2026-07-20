@@ -51,7 +51,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 
   let mut final_buffer = String::with_capacity(2048);
 
-  let mut buffer_write = |
+  let buffer_write = |
     buffer: &mut String, lhs: &str, join: &str, rhs: &str
   | {
     buffer.push_str(lhs);
@@ -80,11 +80,11 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 
   buffer_write(&mut final_buffer, ljoin, tjoin, rjoin);
 
-  write!(final_buffer, "{ver} {part_drop:width$} ", width = widths[0]);
+  write!(final_buffer, "{ver} {part_drop:width$} ", width = widths[0]).ok();
   for (i, drop_str) in drop_cache.iter().enumerate() {
-    write!(final_buffer, "{ver} {drop_str:width$} ", width = widths[i + 1]);
+    write!(final_buffer, "{ver} {drop_str:width$} ", width = widths[i + 1]).ok();
   }
-  writeln!(final_buffer, "{ver}");
+  writeln!(final_buffer, "{ver}").ok();
 
   buffer_write(&mut final_buffer, ljoin, mjoin, rjoin);
 
@@ -92,13 +92,13 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let len_rows = damages.len() - 1;
 
   for i in 0..damages.len() {
-    write!(final_buffer, "{ver} {:width$} ", PARTS[i], width = widths[0]);
+    write!(final_buffer, "{ver} {:width$} ", PARTS[i], width = widths[0]).ok();
 
     for ii in 0..drops.len() {
       let ttk_str = cache_iter.next().unwrap();
-      write!(final_buffer, "{ver} {ttk_str:width$} ", width = widths[ii + 1]);
+      write!(final_buffer, "{ver} {ttk_str:width$} ", width = widths[ii + 1]).ok();
     }
-    writeln!(final_buffer, "{ver}");
+    writeln!(final_buffer, "{ver}").ok();
 
     if i != len_rows { 
       buffer_write(&mut final_buffer, ljoin, mjoin, rjoin); 
@@ -135,7 +135,7 @@ fn validate_input(input: &mut Input, re: Regex) {
     } else {
       let pos = (i.position() - 1).max(0);
       i.set_value(&last_valid);
-      i.set_position(pos);
+      drop(i.set_position(pos));
     }
   });
 }
@@ -186,14 +186,14 @@ fn main() {
           Key::Down => {
             if let Some(mut target) = down_target.clone() {
               target.set_value(&widget.value());
-              target.take_focus();
+              drop(target.take_focus());
               return true;
             }
           }
           Key::Up => {
             if let Some(mut target) = up_target.clone() {
               target.set_value(&widget.value());
-              target.take_focus();
+              drop(target.take_focus());
               return true;
             }
           }
@@ -277,7 +277,7 @@ fn main() {
     let (new_width, new_height) = (375 + text_w + 20, 350.max(text_h + 20));
     window_clone.set_size(new_width, new_height);
 
-    first_input.take_focus();
+    drop(first_input.take_focus());
   });
 
   delta_app.run().unwrap();
