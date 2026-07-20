@@ -1,7 +1,7 @@
 #![windows_subsystem = "windows"]
 
 use fltk::{app, button::Button, enums::{Align, Font, Event, Key},
-  frame::Frame, input::Input, window::Window, prelude::*};
+  frame::Frame, input::Input, window::Window, image::IcoImage, prelude::*};
 use regex::Regex;
 use std::f64;
 
@@ -38,8 +38,8 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let cols = rows[0].len();
   let mut widths = vec![0; cols];
   for row in &rows {
-    for (ii, cell) in row.iter().enumerate() {
-      widths[ii] = widths[ii].max(cell.chars().count());
+    for (i, cell) in row.iter().enumerate() {
+      widths[i] = widths[i].max(cell.chars().count());
     }
   }
 
@@ -115,6 +115,10 @@ fn main() {
 
   let mut window = Window::default()
     .with_size(365, 350).with_label("Delta Force TTK Calculator");
+
+  if let Ok(icon) = IcoImage::from_data(include_bytes!("icon.ico")) {
+    window.set_icon(Some(icon));
+  }
 
   let mut damage_inputs = Vec::new();
   let mut row_y = 10;
@@ -210,20 +214,20 @@ fn main() {
 
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
-      let rate: f64 = rate_input.value()
-        .replace(",", ".").parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
+      let rate: f64 = rate_input.value().replace(",", ".")
+        .parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
 
-      let mut damages = Vec::new();
+      let mut damages: Vec<f64> = Vec::new();
       for input in &damage_inputs {
         if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.to_string()); }
         damages.push(parse_damage(&input.value())?);
       }
 
-      let mut drops: Vec<f64> = drop_input.value().replace(",", ".").split_whitespace()
-        .map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.to_string()))
+      let mut drops: Vec<f64> = drop_input.value().replace(",", ".")
+        .split_whitespace().map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.to_string()))
         .collect::<Result<Vec<f64>, String>>()?;
 
-      if drops.is_empty() { drops = vec![1.0]; }
+      if drops.is_empty() { return Err(DROP_ERROR.to_string()); }
       drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
 
       get_ttk_table(&damages, &drops, rate)
