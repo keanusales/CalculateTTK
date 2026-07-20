@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use fltk::{app, button::Button, enums::{Align, Font, Event, Key},
+use fltk::{app, button::Button, enums::{Align, Font, Event, Key, CallbackTrigger},
   frame::Frame, input::Input, window::Window, image::PngImage, prelude::*};
 use regex::Regex;
 use std::f64;
@@ -89,11 +89,11 @@ fn parse_damage(s: &str) -> Result<f64, String> {
   }
 }
 
-fn validate_input(input: &mut fltk::input::Input, pattern: &str) {
+fn validate_input(input: &mut Input, pattern: &str) {
   let re = Regex::new(&format!("^{pattern}$")).unwrap();
   let mut last_valid = input.value();
 
-  input.set_trigger(fltk::enums::CallbackTrigger::Changed);
+  input.set_trigger(CallbackTrigger::Changed);
   input.set_callback(move |i| {
     let current = i.value();
 
