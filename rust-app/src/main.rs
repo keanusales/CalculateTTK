@@ -1,7 +1,7 @@
 #![windows_subsystem = "windows"]
 
 use fltk::{app, button::Button, enums::{Align, Font, Event, Key},
-  frame::Frame, input::Input, window::Window, image::IcoImage, prelude::*};
+  frame::Frame, input::Input, window::Window, image::PngImage, prelude::*};
 use regex::Regex;
 use std::f64;
 
@@ -116,11 +116,11 @@ fn main() {
   let mut window = Window::default()
     .with_size(365, 350).with_label("Delta Force TTK Calculator");
 
-  if let Ok(icon) = IcoImage::from_data(include_bytes!("../icon.ico")) {
+  if let Ok(icon) = PngImage::from_data(include_bytes!("../icon.png")) {
     window.set_icon(Some(icon));
   }
 
-  let mut damage_inputs = Vec::new();
+  let mut damage_inputs: Vec<Input> = Vec::new();
   let mut row_y = 10;
 
   for part in PARTS.iter() {
