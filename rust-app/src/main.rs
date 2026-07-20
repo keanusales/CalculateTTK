@@ -116,7 +116,7 @@ fn main() {
   let mut window = Window::default()
     .with_size(365, 350).with_label("Delta Force TTK Calculator");
 
-  if let Ok(icon) = SvgImage::from_data(include_bytes!("../icon.svg")) {
+  if let Ok(icon) = SvgImage::from_data(include_str!("../icon.svg")) {
     window.set_icon(Some(icon));
   }
 
