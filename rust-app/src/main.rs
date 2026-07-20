@@ -28,8 +28,8 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     .map(|p| p.chars().count())
     .max().unwrap_or(0).max(part_drop.len());
 
-  let mut ttk_cache = Vec::with_capacity(damages.len() * drops.len());
-  let mut drop_cache = Vec::with_capacity(drops.len());
+  let mut ttk_cache: Vec<String> = Vec::with_capacity(damages.len() * drops.len());
+  let mut drop_cache: Vec<String> = Vec::with_capacity(drops.len());
 
   for (i, &drop) in drops.iter().enumerate() {
     let drop_str = format!("{drop}x");
@@ -49,7 +49,8 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let (hor, ver, tlhs, trhs, blhs, brhs) = ("═", "║", "╔", "╗", "╚", "╝");
   let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
 
-  let mut final_buffer = String::with_capacity(2048);
+  let total_width = 3 * num_cols + widths.iter().sum::<usize>() - 1;
+  let mut final_buffer = String::with_capacity(20 * total_width);
 
   let buffer_write = |
     buffer: &mut String, lhs: &str, join: &str, rhs: &str
@@ -66,7 +67,6 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 
   buffer_write(&mut final_buffer, tlhs, hor, trhs);
 
-  let total_width = 3 * num_cols + widths.iter().sum::<usize>() - 1;
   let title_inner = format!(" Punishment is {punish:.1} ms ");
   let pad_len = total_width.saturating_sub(title_inner.chars().count());
   let half_pad = pad_len / 2;
@@ -93,27 +93,23 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 
   for i in 0..damages.len() {
     write!(final_buffer, "{ver} {:width$} ", PARTS[i], width = widths[0]).ok();
-
     for ii in 0..drops.len() {
       let ttk_str = cache_iter.next().unwrap();
       write!(final_buffer, "{ver} {ttk_str:width$} ", width = widths[ii + 1]).ok();
     }
     writeln!(final_buffer, "{ver}").ok();
-
-    if i != len_rows { 
-      buffer_write(&mut final_buffer, ljoin, mjoin, rjoin); 
+    if i != len_rows {
+      buffer_write(&mut final_buffer, ljoin, mjoin, rjoin);
     }
   }
 
   buffer_write(&mut final_buffer, blhs, bjoin, brhs);
-
   Ok(final_buffer)
 }
 
 fn parse_damage(s: &str) -> Result<f64, String> {
   let mut s = s.replace(",", ".");
   s.retain(|c| !c.is_whitespace());
-
   if let Some((a, b)) = s.split_once('*') {
     let n1 = a.parse::<f64>().map_err(|_| format!("Invalid value: {a}"))?;
     let n2 = b.parse::<f64>().map_err(|_| format!("Invalid value: {b}"))?;
@@ -125,11 +121,9 @@ fn parse_damage(s: &str) -> Result<f64, String> {
 
 fn validate_input(input: &mut Input, re: Regex) {
   let mut last_valid = input.value();
-
   input.set_trigger(CallbackTrigger::Changed);
   input.set_callback(move |i| {
     let current = i.value();
-
     if current.is_empty() || re.is_match(&current) {
       last_valid = current;
     } else {
@@ -152,7 +146,7 @@ fn main() {
     window.set_icon(Some(icon));
   }
 
-  let mut damage_inputs: Vec<Input> = Vec::new();
+  let mut damage_inputs: Vec<Input> = Vec::with_capacity(PARTS.len());
   let mut row_y = 10;
 
   let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
@@ -252,7 +246,7 @@ fn main() {
       let rate: f64 = rate_input.value().replace(",", ".")
         .parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
 
-      let mut damages: Vec<f64> = Vec::new();
+      let mut damages: Vec<f64> = Vec::with_capacity(damage_inputs.len());
       for input in &damage_inputs {
         if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.to_string()); }
         damages.push(parse_damage(&input.value())?);
