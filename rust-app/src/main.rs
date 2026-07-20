@@ -25,8 +25,8 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let mut widths = vec![0; num_cols];
 
   widths[0] = PARTS[..damages.len()].iter()
-    .map(|p| p.chars().count())
-    .max().unwrap_or(0).max(part_drop.len());
+    .map(|p| p.chars().count()).max()
+    .unwrap_or(0).max(part_drop.chars().count());
 
   let mut ttk_cache: Vec<String> = Vec::with_capacity(damages.len() * drops.len());
   let mut drop_cache: Vec<String> = Vec::with_capacity(drops.len());
@@ -50,7 +50,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
 
   let total_width = 3 * num_cols + widths.iter().sum::<usize>() - 1;
-  let mut final_buffer = String::with_capacity(20 * total_width);
+  let mut final_buffer = String::with_capacity(50 * total_width);
 
   let buffer_write = |
     buffer: &mut String, lhs: &str, join: &str, rhs: &str
