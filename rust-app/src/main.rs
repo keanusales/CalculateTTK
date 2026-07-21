@@ -2,7 +2,7 @@
 
 use fltk::{app, button::Button, enums::{Align, Font, Event, Key, CallbackTrigger},
   frame::Frame, input::Input, window::Window, image::SvgImage, prelude::*};
-use std::{f64, iter::repeat, fmt::Write};
+use std::{f64, iter::repeat, fmt::Write, array::from_fn};
 use regex::Regex;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
@@ -143,21 +143,21 @@ fn main() {
     window.set_icon(Some(icon));
   }
 
-  let mut damage_inputs: Vec<Input> = Vec::with_capacity(PARTS.len());
   let mut row_y = 10;
-
   let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
-  for part in PARTS.iter() {
+  let damage_inputs: [Input; 7] = from_fn(|i| {
+    let part = PARTS[i];
+
     let mut frame = Frame::default().with_pos(10, row_y)
       .with_size(235, 25).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
 
     let mut input = Input::default().with_pos(255, row_y).with_size(100, 25);
     validate_input(&mut input, damage_re.clone());
-    row_y += 30;
+    row_y += 30; 
 
-    damage_inputs.push(input);
-  }
+    input 
+  });
 
   let num_inputs = damage_inputs.len();
   for i in 0..num_inputs {
@@ -243,10 +243,10 @@ fn main() {
       let rate: f64 = rate_input.value().replace(",", ".")
         .parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
 
-      let mut damages: Vec<f64> = Vec::with_capacity(damage_inputs.len());
-      for input in &damage_inputs {
+      let mut damages = [0.0; 7];
+      for (i, input) in damage_inputs.iter().enumerate() {
         if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.to_string()); }
-        damages.push(parse_damage(&input.value())?);
+        damages[i] = parse_damage(&input.value())?;
       }
 
       let mut drops: Vec<f64> = drop_input.value().replace(",", ".")
