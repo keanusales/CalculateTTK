@@ -19,30 +19,27 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     return Err(DAMAGE_ERROR.into());
   }
 
-  let part_drop = "Part/Drop";
-  let punish = 60000.0 / rate;
-  let num_cols = 1 + drops.len();
-  let mut widths = vec![0; num_cols];
+  let (part_drop, num_cols) = ("Part/Drop", 1 + drops.len());
+  let (punish, mut widths) = (60000.0 / rate, vec![0; num_cols]);
 
-  widths[0] = PARTS[..damages.len()].iter()
-    .map(|p| p.chars().count()).max()
+  widths[0] = PARTS.iter().map(|p| p.chars().count()).max()
     .unwrap_or(0).max(part_drop.chars().count());
 
-  let mut ttk_cache: Vec<String> = Vec::with_capacity(damages.len() * drops.len());
+  let mut ttks_cache: Vec<String> = Vec::with_capacity(damages.len() * drops.len());
   let mut drop_cache: Vec<String> = Vec::with_capacity(drops.len());
 
-  for (i, &drop) in drops.iter().enumerate() {
+  for (i, &drop) in (1..).zip(drops.iter()) {
     let drop_str = format!("{drop}x");
-    widths[i + 1] = drop_str.chars().count();
+    widths[i] = drop_str.chars().count();
     drop_cache.push(drop_str);
   }
 
   for &damage in damages {
-    for (i, &drop) in drops.iter().enumerate() {
+    for (i, &drop) in (1..).zip(drops.iter()) {
       let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
       let ttk_str = format!("{ttk:.1}");
-      widths[i + 1] = widths[i + 1].max(ttk_str.chars().count());
-      ttk_cache.push(ttk_str);
+      widths[i] = widths[i].max(ttk_str.chars().count());
+      ttks_cache.push(ttk_str);
     }
   }
 
@@ -50,61 +47,61 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
 
   let total_width = 3 * num_cols + widths.iter().sum::<usize>() - 1;
-  let mut final_buffer = String::with_capacity(50 * total_width);
+  let mut retbuffer = String::with_capacity(50 * total_width);
 
   let buffer_write = |
     buffer: &mut String, lhs: &str, join: &str, rhs: &str
   | {
     buffer.push_str(lhs);
-    let len = widths.len();
+    let wlen = widths.len() - 1;
     for (i, &width) in widths.iter().enumerate() {
       buffer.extend(repeat(hor).take(width + 2));
-      if i < len - 1 { buffer.push_str(join); }
+      if i < wlen { buffer.push_str(join); }
     }
     buffer.push_str(rhs);
     buffer.push('\n');
   };
 
-  buffer_write(&mut final_buffer, tlhs, hor, trhs);
+  buffer_write(&mut retbuffer, tlhs, hor, trhs);
 
   let title_inner = format!(" Punishment is {punish:.1} ms ");
   let pad_len = total_width.saturating_sub(title_inner.chars().count());
   let half_pad = pad_len / 2;
 
-  final_buffer.push_str(ljoin);
-  final_buffer.extend(repeat(hor).take(half_pad));
-  final_buffer.push_str(&title_inner);
-  final_buffer.extend(repeat(hor).take(pad_len - half_pad));
-  final_buffer.push_str(rjoin);
-  final_buffer.push('\n');
+  retbuffer.push_str(ljoin);
+  retbuffer.extend(repeat(hor).take(half_pad));
+  retbuffer.push_str(&title_inner);
+  retbuffer.extend(repeat(hor).take(pad_len - half_pad));
+  retbuffer.push_str(rjoin);
+  retbuffer.push('\n');
 
-  buffer_write(&mut final_buffer, ljoin, tjoin, rjoin);
+  buffer_write(&mut retbuffer, ljoin, tjoin, rjoin);
 
-  write!(final_buffer, "{ver} {part_drop:width$} ", width = widths[0]).ok();
-  for (i, drop_str) in drop_cache.iter().enumerate() {
-    write!(final_buffer, "{ver} {drop_str:width$} ", width = widths[i + 1]).ok();
+  write!(retbuffer, "{ver} {part_drop:width$} ", width = widths[0]).ok();
+  for (i, drop_str) in (1..).zip(drop_cache.iter()) {
+    write!(retbuffer, "{ver} {drop_str:width$} ", width = widths[i]).ok();
   }
-  writeln!(final_buffer, "{ver}").ok();
+  writeln!(retbuffer, "{ver}").ok();
 
-  buffer_write(&mut final_buffer, ljoin, mjoin, rjoin);
+  buffer_write(&mut retbuffer, ljoin, mjoin, rjoin);
 
-  let mut cache_iter = ttk_cache.into_iter();
+  let mut cache_iter = ttks_cache.into_iter();
   let len_rows = damages.len() - 1;
 
   for i in 0..damages.len() {
-    write!(final_buffer, "{ver} {:width$} ", PARTS[i], width = widths[0]).ok();
-    for ii in 0..drops.len() {
+    write!(retbuffer, "{ver} {:width$} ", PARTS[i], width = widths[0]).ok();
+    for ii in 1..(drops.len() + 1) {
       let ttk_str = cache_iter.next().unwrap();
-      write!(final_buffer, "{ver} {ttk_str:width$} ", width = widths[ii + 1]).ok();
+      write!(retbuffer, "{ver} {ttk_str:width$} ", width = widths[ii]).ok();
     }
-    writeln!(final_buffer, "{ver}").ok();
+    writeln!(retbuffer, "{ver}").ok();
     if i != len_rows {
-      buffer_write(&mut final_buffer, ljoin, mjoin, rjoin);
+      buffer_write(&mut retbuffer, ljoin, mjoin, rjoin);
     }
   }
 
-  buffer_write(&mut final_buffer, blhs, bjoin, brhs);
-  Ok(final_buffer)
+  buffer_write(&mut retbuffer, blhs, bjoin, brhs);
+  Ok(retbuffer)
 }
 
 fn parse_damage(s: &str) -> Result<f64, String> {
