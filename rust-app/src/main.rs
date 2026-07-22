@@ -53,10 +53,9 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     buffer: &mut String, lhs: &str, join: &str, rhs: &str
   | {
     buffer.push_str(lhs);
-    let wlen = widths.len() - 1;
     for (i, &width) in widths.iter().enumerate() {
       buffer.extend(repeat(hor).take(width + 2));
-      if i < wlen { buffer.push_str(join); }
+      if i < widths.len() - 1 { buffer.push_str(join); }
     }
     buffer.push_str(rhs);
     buffer.push('\n');
@@ -86,8 +85,6 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   buffer_write(&mut retbuffer, ljoin, mjoin, rjoin);
 
   let mut cache_iter = ttks_cache.into_iter();
-  let len_rows = damages.len() - 1;
-
   for i in 0..damages.len() {
     write!(retbuffer, "{ver} {:width$} ", PARTS[i], width = widths[0]).ok();
     for ii in 1..(drops.len() + 1) {
@@ -95,7 +92,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
       write!(retbuffer, "{ver} {ttk_str:width$} ", width = widths[ii]).ok();
     }
     writeln!(retbuffer, "{ver}").ok();
-    if i != len_rows {
+    if i != damages.len() - 1 {
       buffer_write(&mut retbuffer, ljoin, mjoin, rjoin);
     }
   }
@@ -131,30 +128,39 @@ fn validate_input(input: &mut Input, re: Regex) {
   });
 }
 
+const (PAD_X, PAD_Y, PAD_2Y): (i32, i32, i32) = (10, 10, 20);
+const (ROW_H, ROW_STEP): (i32, i32) = (25, 30);
+
+const (WIN_W, WIN_H, RES_X): (i32, i32, i32) = (365, 350, 375);
+const (LBL_W, INP_W, INP_X): (i32, i32, i32) = (235, 100, 255);
+const (BTN_H, BTN_W): (i32, i32) = (30, 345);
+
+const BG_COLOR: (u8, u8, u8) = (240, 240, 240);
+
 fn main() {
   let delta_app = app::App::default().with_scheme(app::Scheme::Gtk);
-  app::background(240, 240, 240);
+  app::background(BG_COLOR.0, BG_COLOR.1, BG_COLOR.2);
   app::set_font(Font::Helvetica);
 
   let mut window = Window::default()
-    .with_size(365, 350).with_label("Delta Force TTK Calculator");
+    .with_size(WIN_W, WIN_H).with_label("Delta Force TTK Calculator");
 
   if let Ok(icon) = SvgImage::from_data(include_str!("../icon.svg")) {
     window.set_icon(Some(icon));
   }
 
-  let mut row_y = 10;
+  let mut row_y = PAD_Y;
   let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
   let damage_inputs: [Input; PARTS.len()] = from_fn(|i| {
     let part = PARTS[i];
 
-    let mut frame = Frame::default().with_pos(10, row_y)
-      .with_size(235, 25).with_label(&format!("Damage value for {part}:"));
+    let mut frame = Frame::default().with_pos(PAD_X, row_y)
+      .with_size(LBL_W, ROW_H).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
 
-    let mut input = Input::default().with_pos(255, row_y).with_size(100, 25);
+    let mut input = Input::default().with_pos(INP_X, row_y).with_size(INP_W, ROW_H);
     validate_input(&mut input, damage_re.clone());
-    row_y += 30;
+    row_y += ROW_STEP;
 
     input
   });
@@ -194,26 +200,26 @@ fn main() {
     });
   }
 
-  let mut frame = Frame::default().with_pos(10, row_y)
-    .with_size(235, 25).with_label("Damage drops (space separated):");
+  let mut frame = Frame::default().with_pos(PAD_X, row_y)
+    .with_size(LBL_W, ROW_H).with_label("Damage drops (space separated):");
   frame.set_align(Align::Center | Align::Inside);
 
   let drop_re = Regex::new(r"^1 ?((0?[.,]\d*) ?)*$").unwrap();
-  let mut drop_input = Input::default().with_pos(255, row_y).with_size(100, 25);
+  let mut drop_input = Input::default().with_pos(INP_X, row_y).with_size(INP_W, ROW_H);
   validate_input(&mut drop_input, drop_re.clone());
-  row_y += 30;
+  row_y += ROW_STEP;
 
-  let mut frame = Frame::default().with_pos(10, row_y)
-    .with_size(235, 25).with_label("Weapon firerate (shots per minute):");
+  let mut frame = Frame::default().with_pos(PAD_X, row_y)
+    .with_size(LBL_W, ROW_H).with_label("Weapon firerate (shots per minute):");
   frame.set_align(Align::Center | Align::Inside);
 
   let rate_re = Regex::new(r"^\d+[.,]?\d*$").unwrap();
-  let mut rate_input = Input::default().with_pos(255, row_y).with_size(100, 25);
+  let mut rate_input = Input::default().with_pos(INP_X, row_y).with_size(INP_W, ROW_H);
   validate_input(&mut rate_input, rate_re.clone());
-  row_y += 30;
+  row_y += ROW_STEP;
 
-  let mut calc_btn = Button::default().with_pos(10, row_y)
-    .with_size(345, 30).with_label("Calculate TTK for this weapon");
+  let mut calc_btn = Button::default().with_pos(PAD_X, row_y)
+    .with_size(BTN_W, BTN_H).with_label("Calculate TTK for this weapon");
 
   calc_btn.handle(|button, event| {
     if event == Event::KeyDown {
@@ -228,7 +234,7 @@ fn main() {
     false
   });
 
-  let mut result_label = Frame::default().with_pos(375, 10).with_size(0, 0);
+  let mut result_label = Frame::default().with_pos(RES_X, PAD_Y).with_size(0, 0);
   result_label.set_label_font(Font::Courier);
   result_label.set_align(Align::Center | Align::Inside);
 
@@ -262,10 +268,8 @@ fn main() {
     }
 
     let (text_w, text_h) = result_label.measure_label();
-    result_label.resize(375, 10, text_w, text_h);
-
-    let (new_width, new_height) = (375 + text_w + 20, 350.max(text_h + 20));
-    window_clone.set_size(new_width, new_height);
+    window_clone.set_size(RES_X + text_w + PAD_2Y, WIN_H.max(text_h + PAD_2Y));
+    result_label.resize(RES_X, PAD_Y, text_w, text_h);
 
     drop(first_input.take_focus());
   });
