@@ -145,7 +145,7 @@ fn main() {
 
   let mut row_y = 10;
   let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
-  let damage_inputs: [Input; 7] = from_fn(|i| {
+  let damage_inputs: [Input; PARTS.len()] = from_fn(|i| {
     let part = PARTS[i];
 
     let mut frame = Frame::default().with_pos(10, row_y)
@@ -154,9 +154,9 @@ fn main() {
 
     let mut input = Input::default().with_pos(255, row_y).with_size(100, 25);
     validate_input(&mut input, damage_re.clone());
-    row_y += 30; 
+    row_y += 30;
 
-    input 
+    input
   });
 
   let num_inputs = damage_inputs.len();
@@ -243,7 +243,7 @@ fn main() {
       let rate: f64 = rate_input.value().replace(",", ".")
         .parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
 
-      let mut damages = [0.0; 7];
+      let mut damages = [0.0; PARTS.len()];
       for (i, input) in damage_inputs.iter().enumerate() {
         if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.to_string()); }
         damages[i] = parse_damage(&input.value())?;
