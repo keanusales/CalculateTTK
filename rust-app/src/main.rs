@@ -12,21 +12,21 @@ const FIRERATE_ERROR: &str = "Ensure the firerate value is positive.";
 
 fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, String> {
   if rate <= 0.0 { return Err(FIRERATE_ERROR.into()); }
+  if damages.len() != PARTS.len() || !damages.iter().all(|&d| d > 0.0) {
+    return Err(DAMAGE_ERROR.into());
+  }
   if drops.is_empty() || !drops.iter().all(|&d| d > 0.0 && d <= 1.0) {
     return Err(DROP_ERROR.into());
   }
-  if damages.is_empty() || !damages.iter().all(|&d| d > 0.0) {
-    return Err(DAMAGE_ERROR.into());
-  }
 
-  let (part_drop, num_cols) = ("Part/Drop", 1 + drops.len());
-  let (punish, mut widths) = (60000.0 / rate, vec![0; num_cols]);
+  let (punish, num_cols) = (60000.0 / rate, 1 + drops.len());
+  let (part_drop, mut widths) = ("Part/Drop", vec![0; num_cols]);
 
   widths[0] = PARTS.iter().map(|p| p.chars().count()).max()
     .unwrap_or(0).max(part_drop.chars().count());
 
-  let mut ttks_cache: Vec<String> = Vec::with_capacity(damages.len() * drops.len());
-  let mut drop_cache: Vec<String> = Vec::with_capacity(drops.len());
+  let mut ttks_cache = Vec::<String>::with_capacity(damages.len() * drops.len());
+  let mut drop_cache = Vec::<String>::with_capacity(drops.len());
 
   for (i, &drop) in (1..).zip(drops.iter()) {
     let drop_str = format!("{drop}x");
@@ -159,15 +159,14 @@ fn main() {
     input
   });
 
-  let num_inputs = damage_inputs.len();
-  for i in 0..num_inputs {
+  for i in 0..damage_inputs.len() {
     let mut current = damage_inputs[i].clone();
 
     let up_target = if i > 0 {
       Some(damage_inputs[i - 1].clone())
     } else { None };
 
-    let down_target = if i < num_inputs - 1 {
+    let down_target = if i < damage_inputs.len() - 1 {
       Some(damage_inputs[i + 1].clone())
     } else { None };
 
@@ -245,12 +244,12 @@ fn main() {
 
       let mut damages = [0.0; PARTS.len()];
       for (i, input) in damage_inputs.iter().enumerate() {
-        if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.to_string()); }
+        if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.into()); }
         damages[i] = parse_damage(&input.value())?;
       }
 
       let mut drops: Vec<f64> = drop_input.value().replace(",", ".")
-        .split_whitespace().map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.to_string()))
+        .split_whitespace().map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.into()))
         .collect::<Result<Vec<f64>, String>>()?;
 
       drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
