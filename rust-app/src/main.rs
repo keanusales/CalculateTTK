@@ -212,8 +212,8 @@ fn main() {
   validate_input(&mut rate_input, rate_re.clone());
   row_px += STEP;
 
-  let mut calc_btn = Button::default().with_pos(PAD_A, row_px)
-    .with_size(LBL_W + INP_W, ROW_H).with_label("Calculate TTK for this weapon");
+  let mut calc_btn = Button::default().with_size(LBL_W + PAD_A + INP_W, ROW_H)
+    .with_pos(PAD_A, row_px).with_label("Calculate TTK for this weapon");
   calc_btn.set_align(Align::Center | Align::Inside);
 
   calc_btn.handle(|button, event| {
