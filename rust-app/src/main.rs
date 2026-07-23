@@ -128,19 +128,13 @@ fn validate_input(input: &mut Input, re: Regex) {
   });
 }
 
-const PAD_X: i32 = 10; const PAD_Y: i32 = 10; const PAD_2Y: i32 = 20;
-const ROW_H: i32 = 25; const ROW_STEP: i32 = 30;
-
-const WIN_W: i32 = 365; const WIN_H: i32 = 350; const RES_X: i32 = 375;
-const LBL_W: i32 = 235; const INP_W: i32 = 100; const INP_X: i32 = 255;
-const BTN_H: i32 = 30; const BTN_W: i32 = 345;
-
-const BG_COLOR: (u8, u8, u8) = (240, 240, 240);
+const PAD_A: i32 = 10; const INP_X: i32 = 255; const RES_X: i32 = 375;
+const LBL_W: i32 = 235; const INP_W: i32 = 100; const ROW_H: i32 = 25;
+const WIN_W: i32 = 365; const WIN_H: i32 = 350; const STEP: i32 = 30;
 
 fn main() {
   let delta_app = app::App::default().with_scheme(app::Scheme::Gtk);
-  app::background(BG_COLOR.0, BG_COLOR.1, BG_COLOR.2);
-  app::set_font(Font::Helvetica);
+  app::background(240, 240, 240); app::set_font(Font::Helvetica);
 
   let mut window = Window::default()
     .with_size(WIN_W, WIN_H).with_label("Delta Force TTK Calculator");
@@ -149,18 +143,18 @@ fn main() {
     window.set_icon(Some(icon));
   }
 
-  let mut row_y = PAD_Y;
+  let mut row_px = PAD_A;
   let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
   let damage_inputs: [Input; PARTS.len()] = from_fn(|i| {
     let part = PARTS[i];
 
-    let mut frame = Frame::default().with_pos(PAD_X, row_y)
+    let mut frame = Frame::default().with_pos(PAD_A, row_px)
       .with_size(LBL_W, ROW_H).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
 
-    let mut input = Input::default().with_pos(INP_X, row_y).with_size(INP_W, ROW_H);
+    let mut input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
     validate_input(&mut input, damage_re.clone());
-    row_y += ROW_STEP;
+    row_px += STEP;
 
     input
   });
@@ -200,26 +194,27 @@ fn main() {
     });
   }
 
-  let mut frame = Frame::default().with_pos(PAD_X, row_y)
+  let mut frame = Frame::default().with_pos(PAD_A, row_px)
     .with_size(LBL_W, ROW_H).with_label("Damage drops (space separated):");
   frame.set_align(Align::Center | Align::Inside);
 
   let drop_re = Regex::new(r"^1 ?((0?[.,]\d*) ?)*$").unwrap();
-  let mut drop_input = Input::default().with_pos(INP_X, row_y).with_size(INP_W, ROW_H);
+  let mut drop_input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
   validate_input(&mut drop_input, drop_re.clone());
-  row_y += ROW_STEP;
+  row_px += STEP;
 
-  let mut frame = Frame::default().with_pos(PAD_X, row_y)
+  let mut frame = Frame::default().with_pos(PAD_A, row_px)
     .with_size(LBL_W, ROW_H).with_label("Weapon firerate (shots per minute):");
   frame.set_align(Align::Center | Align::Inside);
 
   let rate_re = Regex::new(r"^\d+[.,]?\d*$").unwrap();
-  let mut rate_input = Input::default().with_pos(INP_X, row_y).with_size(INP_W, ROW_H);
+  let mut rate_input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
   validate_input(&mut rate_input, rate_re.clone());
-  row_y += ROW_STEP;
+  row_px += STEP;
 
-  let mut calc_btn = Button::default().with_pos(PAD_X, row_y)
-    .with_size(BTN_W, BTN_H).with_label("Calculate TTK for this weapon");
+  let mut calc_btn = Button::default().with_pos(PAD_A, row_px)
+    .with_size(LBL_W + INP_W, ROW_H).with_label("Calculate TTK for this weapon");
+  calc_btn.set_align(Align::Center | Align::Inside);
 
   calc_btn.handle(|button, event| {
     if event == Event::KeyDown {
@@ -234,7 +229,7 @@ fn main() {
     false
   });
 
-  let mut result_label = Frame::default().with_pos(RES_X, PAD_Y).with_size(0, 0);
+  let mut result_label = Frame::default().with_pos(RES_X, PAD_A).with_size(0, 0);
   result_label.set_label_font(Font::Courier);
   result_label.set_align(Align::Center | Align::Inside);
 
@@ -268,8 +263,8 @@ fn main() {
     }
 
     let (text_w, text_h) = result_label.measure_label();
-    window_clone.set_size(RES_X + text_w + PAD_2Y, WIN_H.max(text_h + PAD_2Y));
-    result_label.resize(RES_X, PAD_Y, text_w, text_h);
+    window_clone.set_size(2 * PAD_A + RES_X + text_w, WIN_H.max(2 * PAD_A + text_h));
+    result_label.resize(RES_X, PAD_A, text_w, text_h);
 
     drop(first_input.take_focus());
   });
