@@ -128,12 +128,12 @@ fn validate_input(input: &mut Input, re: Regex) {
   });
 }
 
-const (PAD_X, PAD_Y, PAD_2Y): (i32, i32, i32) = (10, 10, 20);
-const (ROW_H, ROW_STEP): (i32, i32) = (25, 30);
+const PAD_X: i32 = 10; const PAD_Y: i32 = 10; const PAD_2Y: i32 = 20;
+const ROW_H: i32 = 25; const ROW_STEP: i32 = 30;
 
-const (WIN_W, WIN_H, RES_X): (i32, i32, i32) = (365, 350, 375);
-const (LBL_W, INP_W, INP_X): (i32, i32, i32) = (235, 100, 255);
-const (BTN_H, BTN_W): (i32, i32) = (30, 345);
+const WIN_W: i32 = 365; const WIN_H: i32 = 350; const RES_X: i32 = 375;
+const LBL_W: i32 = 235; const INP_W: i32 = 100; const INP_X: i32 = 255;
+const BTN_H: i32 = 30; const BTN_W: i32 = 345;
 
 const BG_COLOR: (u8, u8, u8) = (240, 240, 240);
 
