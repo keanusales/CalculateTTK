@@ -19,14 +19,15 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     return Err(DROP_ERROR.into());
   }
 
-  let (punish, num_cols) = (60000.0 / rate, 1 + drops.len());
-  let (part_drop, mut widths) = ("Part/Drop", vec![0; num_cols]);
-
-  widths[0] = PARTS.iter().map(|p| p.chars().count()).max()
-    .unwrap_or(0).max(part_drop.chars().count());
+  let (hor, ver, tlhs, trhs, blhs, brhs) = ("═", "║", "╔", "╗", "╚", "╝");
+  let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
+  let (part_drop, mut widths) = ("Part/Drop", vec![0; 1 + drops.len()]);
 
   let mut ttks_cache = Vec::<String>::with_capacity(damages.len() * drops.len());
   let mut drop_cache = Vec::<String>::with_capacity(drops.len());
+
+  widths[0] = PARTS.iter().map(|p| p.chars().count())
+    .max().unwrap_or(0).max(part_drop.chars().count());
 
   for (i, &drop) in (1..).zip(drops.iter()) {
     let drop_str = format!("{drop}x");
@@ -34,6 +35,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     drop_cache.push(drop_str);
   }
 
+  let punish = 60000.0 / rate;
   for &damage in damages {
     for (i, &drop) in (1..).zip(drops.iter()) {
       let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
@@ -43,10 +45,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     }
   }
 
-  let (hor, ver, tlhs, trhs, blhs, brhs) = ("═", "║", "╔", "╗", "╚", "╝");
-  let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
-
-  let total_width = 3 * num_cols + widths.iter().sum::<usize>() - 1;
+  let total_width = 3 * widths.len() + widths.iter().sum::<usize>() - 1;
   let mut retbuffer = String::with_capacity(50 * total_width);
 
   let buffer_write = |
@@ -57,22 +56,19 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
       buffer.extend(repeat(hor).take(width + 2));
       if i < widths.len() - 1 { buffer.push_str(join); }
     }
-    buffer.push_str(rhs);
-    buffer.push('\n');
+    buffer.push_str(rhs); buffer.push('\n');
   };
 
   buffer_write(&mut retbuffer, tlhs, hor, trhs);
 
   let title_inner = format!(" Punishment is {punish:.1} ms ");
   let pad_len = total_width.saturating_sub(title_inner.chars().count());
-  let half_pad = pad_len / 2;
 
   retbuffer.push_str(ljoin);
-  retbuffer.extend(repeat(hor).take(half_pad));
+  retbuffer.extend(repeat(hor).take(pad_len / 2));
   retbuffer.push_str(&title_inner);
-  retbuffer.extend(repeat(hor).take(pad_len - half_pad));
-  retbuffer.push_str(rjoin);
-  retbuffer.push('\n');
+  retbuffer.extend(repeat(hor).take(pad_len - pad_len / 2));
+  retbuffer.push_str(rjoin); retbuffer.push('\n');
 
   buffer_write(&mut retbuffer, ljoin, tjoin, rjoin);
 
@@ -85,11 +81,11 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   buffer_write(&mut retbuffer, ljoin, mjoin, rjoin);
 
   let mut cache_iter = ttks_cache.into_iter();
-  for i in 0..damages.len() {
-    write!(retbuffer, "{ver} {:width$} ", PARTS[i], width = widths[0]).ok();
+  for (i, part) in PARTS.iter().enumerate() {
+    write!(retbuffer, "{ver} {part:width$} ", width = widths[0]).ok();
     for ii in 1..(drops.len() + 1) {
-      let ttk_str = cache_iter.next().unwrap();
-      write!(retbuffer, "{ver} {ttk_str:width$} ", width = widths[ii]).ok();
+      let ttk = cache_iter.next().unwrap();
+      write!(retbuffer, "{ver} {ttk:width$} ", width = widths[ii]).ok();
     }
     writeln!(retbuffer, "{ver}").ok();
     if i != damages.len() - 1 {
