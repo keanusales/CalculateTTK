@@ -194,7 +194,7 @@ fn main() {
     .with_size(LBL_W, ROW_H).with_label("Damage drops (space separated):");
   frame.set_align(Align::Center | Align::Inside);
 
-  let drop_re = Regex::new(r"^1( (0([.,]\d*)?|[.,]\d*))* ?$").unwrap();
+  let drop_re = Regex::new(r"^((1|0|0?[.,]\d+) )*(1|0|0?[.,]\d*)?$").unwrap();
   let mut drop_input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
   validate_input(&mut drop_input, drop_re.clone());
   row_px += STEP;
