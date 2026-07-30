@@ -100,12 +100,13 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 fn parse_damage(s: &str) -> Result<f64, String> {
   let mut s = s.replace(",", ".");
   s.retain(|c| !c.is_whitespace());
+  let mut s = s.trim_end_matches('*');
   if let Some((a, b)) = s.split_once('*') {
-    let n1 = a.parse::<f64>().map_err(|_| format!("Invalid value: {a}"))?;
-    let n2 = b.parse::<f64>().map_err(|_| format!("Invalid value: {b}"))?;
+    let n1 = a.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
+    let n2 = b.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
     Ok(n1 * n2)
   } else {
-    s.parse::<f64>().map_err(|_| format!("Invalid value: {s}"))
+    s.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())
   }
 }
 
@@ -236,18 +237,19 @@ fn main() {
 
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
-      let rate: f64 = rate_input.value().replace(",", ".")
-        .parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
-
       let mut damages = [0.0; PARTS.len()];
       for (i, input) in damage_inputs.iter().enumerate() {
-        if input.value().trim().is_empty() { return Err(DAMAGE_ERROR.into()); }
+        if input.value().is_empty() { return Err(DAMAGE_ERROR.into()); }
         damages[i] = parse_damage(&input.value())?;
       }
 
       let mut drops: Vec<f64> = drop_input.value().replace(",", ".")
-        .split_whitespace().map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.into()))
+        .split_whitespace().filter(|&s| s != ".")
+        .map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.into()))
         .collect::<Result<Vec<f64>, String>>()?;
+
+      let rate: f64 = rate_input.value().replace(",", ".")
+        .parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
 
       drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
       get_ttk_table(&damages, &drops, rate)
