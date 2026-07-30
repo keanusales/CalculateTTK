@@ -100,7 +100,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
 fn parse_damage(s: &str) -> Result<f64, String> {
   let mut s = s.replace(",", ".");
   s.retain(|c| !c.is_whitespace());
-  let mut s = s.trim_end_matches('*');
+  let s = s.trim_end_matches('*');
   if let Some((a, b)) = s.split_once('*') {
     let n1 = a.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
     let n2 = b.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
