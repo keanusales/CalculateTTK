@@ -97,19 +97,6 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
   Ok(retbuffer)
 }
 
-fn parse_damage(s: &str) -> Result<f64, String> {
-  let mut s = s.replace(",", ".");
-  s.retain(|c| !c.is_whitespace());
-  let s = s.trim_end_matches('*');
-  if let Some((a, b)) = s.split_once('*') {
-    let n1 = a.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
-    let n2 = b.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
-    Ok(n1 * n2)
-  } else {
-    s.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())
-  }
-}
-
 fn validate_input(input: &mut Input, re: Regex) {
   let mut last_valid = input.value();
   input.set_trigger(CallbackTrigger::Changed);
@@ -241,7 +228,15 @@ fn main() {
 
       for (i, input) in damage_inputs.iter().enumerate() {
         if input.value().is_empty() { return Err(DAMAGE_ERROR.into()); }
-        damages[i] = parse_damage(&input.value())?;
+        let mut s = input.value().replace(",", ".");
+        s.retain(|c| !c.is_whitespace());
+        let s = s.trim_end_matches('*');
+        if let Some((a, b)) = s.split_once('*') {
+          let n1 = a.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
+          let n2 = b.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
+          damages[i] = n1 * n2; continue;
+        }
+        damages[i] = s.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
       }
 
       let mut drops: Vec<f64> = drop_input.value().replace(",", ".")
