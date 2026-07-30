@@ -238,6 +238,7 @@ fn main() {
   calc_btn.set_callback(move |_| {
     let process = || -> Result<String, String> {
       let mut damages = [0.0; PARTS.len()];
+
       for (i, input) in damage_inputs.iter().enumerate() {
         if input.value().is_empty() { return Err(DAMAGE_ERROR.into()); }
         damages[i] = parse_damage(&input.value())?;
