@@ -30,16 +30,18 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
     .unwrap_or(0).max(part_drop.chars().count());
 
   for (i, &drop) in (1..).zip(drops.iter()) {
-    drop_cache.push(format!("{drop}x"));
-    widths[i] = drop_cache[i].chars().count();
+    let drop_str = format!("{drop}x");
+    widths[i] = drop_str.chars().count();
+    drop_cache.push(drop_str);
   }
 
   let punish = 60000.0 / rate;
   for &damage in damages {
     for (i, &drop) in (1..).zip(drops.iter()) {
       let ttk = ((100.0 / damage / drop).ceil() - 1.0) * punish;
-      ttks_cache.push(format!("{ttk:.1}"));
-      widths[i] = widths[i].max(ttks_cache[i].chars().count());
+      let ttk_str = format!("{ttk:.1}");
+      widths[i] = widths[i].max(ttk_str.chars().count());
+      ttks_cache.push(ttk_str);
     }
   }
 
