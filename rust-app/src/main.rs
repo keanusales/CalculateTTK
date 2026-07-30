@@ -194,7 +194,7 @@ fn main() {
     .with_size(LBL_W, ROW_H).with_label("Damage drops (space separated):");
   frame.set_align(Align::Center | Align::Inside);
 
-  let drop_re = Regex::new(r"^1 ?((0?[.,]\d*) ?)*$").unwrap();
+  let drop_re = Regex::new(r"^1( (0([.,]\d*)?|[.,]\d*))* ?$").unwrap();
   let mut drop_input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
   validate_input(&mut drop_input, drop_re.clone());
   row_px += STEP;
@@ -212,7 +212,7 @@ fn main() {
     .with_pos(PAD_A, row_px).with_label("Calculate TTK for this weapon");
   calc_btn.set_align(Align::Center | Align::Inside);
 
-  calc_btn.handle(|button, event| {
+  calc_btn.handle(move |button, event| {
     if event == Event::KeyDown {
       match app::event_key() {
         Key::KPEnter | Key::Enter => {
