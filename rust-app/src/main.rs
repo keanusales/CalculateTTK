@@ -129,7 +129,7 @@ fn main() {
   }
 
   let mut row_px = PAD_A;
-  let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
+  let damage_re = Regex::new(r"^\d+[.,]?\d* ?\*? ?\d*[.,]?\d*$").unwrap();
   let damage_inputs: [Input; PARTS.len()] = from_fn(|i| {
     let part = PARTS[i];
 
