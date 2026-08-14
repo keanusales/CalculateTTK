@@ -231,7 +231,7 @@ fn main() {
         if input.value().is_empty() { return Err(DAMAGE_ERROR.into()); }
         let mut s = input.value().replace(",", ".");
         s.retain(|c| !c.is_whitespace());
-        let s = s.trim_end_matches('*');
+        let s = s.trim_end_matches('.').trim_end_matches('*');
         if let Some((a, b)) = s.split_once('*') {
           let n1 = a.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
           let n2 = b.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
