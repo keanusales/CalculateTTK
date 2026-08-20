@@ -41,7 +41,7 @@ fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, St
       let damage = damage * drop;
       let shots = (100.0 / damage).ceil();
       let ttk = (shots - 1.0) * punish;
-      let ttk_str = format!("{shots:.0}:{damage:.0}:{ttk:.1}");
+      let ttk_str = format!("{shots:.0} {damage:.1} {ttk:.1}");
       widths[i] = widths[i].max(ttk_str.chars().count());
       ttks_cache.push(ttk_str);
     }
