@@ -161,7 +161,8 @@ fn main() {
     let punish = 60000.0 / rate;
     let mut table_data = Vec::<Vec<String>>::with_capacity(damages.len() + 1);
 
-    let mut header = vec!["Part / Drop".to_string()];
+    let mut header = Vec::<String>::with_capacity(drops.len() + 1);
+    header.push("Part / Drop".to_string());
     for drop in &drops { header.push(format!("{drop}x")); }
     table_data.push(header);
 
@@ -190,8 +191,8 @@ fn main() {
       if ctx == TableContext::Cell {
         draw::push_clip(x, y, w, h);
 
-        let bg_color = if r == 0 || c == 0 { Color::from_hex(0xdddddd) } else { Color::White };
-        draw::draw_box(FrameType::ThinUpBox, x, y, w, h, bg_color);
+        let color = if r == 0 || c == 0 { Color::from_hex(0xdddddd) } else { Color::White };
+        draw::draw_box(FrameType::ThinUpBox, x, y, w, h, color);
 
         draw::set_draw_color(Color::Black);
         draw::set_font(Font::Helvetica, 14);
