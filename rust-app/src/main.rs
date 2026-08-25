@@ -158,26 +158,21 @@ fn main() {
     drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
     if rate <= 0.0 || drops.is_empty() { return; }
 
-    let punish = 60000.0 / rate;
-    let mut table_data = Vec::<Vec<String>>::with_capacity(damages.len() + 1);
+    let (rows, cols) = ((damages.len() + 1) as i32, (drops.len() + 1) as i32);
 
-    let mut header = Vec::<String>::with_capacity(drops.len() + 1);
-    header.push("Part / Drop".to_string());
-    for drop in &drops { header.push(format!("{drop}x")); }
-    table_data.push(header);
+    let mut table_data = Vec::<String>::with_capacity((rows * cols) as usize);
+
+    table_data.push("Part / Drop".to_string());
+    for drop in &drops { table_data.push(format!("{drop}x")); }
 
     for (i, &damage) in damages.iter().enumerate() {
-      let mut row = Vec::<String>::with_capacity(drops.len() + 1);
-      row.push(PARTS[i].to_string());
+      table_data.push(PARTS[i].to_string());
       for &drop in &drops {
         let shots = (100.0 / damage / drop).ceil();
-        let ttk = (shots - 1.0) * punish;
-        row.push(format!("{shots}t | {ttk:.1}"));
+        let ttk = 60000.0 * (shots - 1.0) / rate;
+        table_data.push(format!("{shots}t | {ttk:.1}"));
       }
-      table_data.push(row);
     }
-
-    let rows = (damages.len() + 1) as i32; let cols = (drops.len() + 1) as i32;
 
     TableExt::clear(&mut result_table);
     result_table.set_rows(rows);
@@ -196,7 +191,7 @@ fn main() {
 
         draw::set_draw_color(Color::Black);
         draw::set_font(Font::Helvetica, 14);
-        draw::draw_text2(&table_data[r as usize][c as usize], x, y, w, h, Align::Center);
+        draw::draw_text2(&table_data[(r * cols + c) as usize], x, y, w, h, Align::Center);
 
         draw::pop_clip();
       }
