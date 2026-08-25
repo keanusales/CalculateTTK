@@ -1,103 +1,18 @@
 #![windows_subsystem = "windows"]
 
-use fltk::{app, button::Button, enums::{Align, Font, Event, Key, CallbackTrigger},
-  frame::Frame, input::Input, window::Window, image::SvgImage, prelude::*};
-use std::{f64, iter::repeat, fmt::Write, array::from_fn};
+use fltk::{
+  app, button::Button, table::{TableRow, TableContext}, draw,
+  enums::{Align, Color, Event, Font, FrameType, Key, CallbackTrigger},
+  frame::Frame, input::Input, window::Window, image::SvgImage, prelude::*
+};
+use std::{array::from_fn, f64};
 use regex::Regex;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
-const DROP_ERROR: &str = "Ensure all drops values are between 0 and 1 (0, 1].";
-const DAMAGE_ERROR: &str = "Ensure all damages values are set and positive.";
-const FIRERATE_ERROR: &str = "Ensure the firerate value is positive.";
 
-fn get_ttk_table(damages: &[f64], drops: &[f64], rate: f64) -> Result<String, String> {
-  if rate <= 0.0 { return Err(FIRERATE_ERROR.into()); }
-  if damages.len() != PARTS.len() || !damages.iter().all(|&d| d > 0.0) {
-    return Err(DAMAGE_ERROR.into());
-  }
-  if drops.is_empty() || !drops.iter().all(|&d| d > 0.0 && d <= 1.0) {
-    return Err(DROP_ERROR.into());
-  }
-
-  let (hor, ver, tlhs, trhs, blhs, brhs) = ("═", "║", "╔", "╗", "╚", "╝");
-  let (tjoin, bjoin, ljoin, mjoin, rjoin) = ("╦", "╩", "╠", "╬", "╣");
-  let (part_drop, mut widths) = ("Part/Drop", vec![0; 1 + drops.len()]);
-
-  let mut ttks_cache = Vec::<String>::with_capacity(damages.len() * drops.len());
-  let mut drop_cache = Vec::<String>::with_capacity(drops.len());
-
-  widths[0] = PARTS.iter().map(|p| p.chars().count()).max()
-    .unwrap_or(0).max(part_drop.chars().count());
-
-  for (i, &drop) in (1..).zip(drops.iter()) {
-    let drop_str = format!("{drop}x");
-    widths[i] = drop_str.chars().count();
-    drop_cache.push(drop_str);
-  }
-
-  let punish = 60000.0 / rate;
-  for &damage in damages {
-    for (i, &drop) in (1..).zip(drops.iter()) {
-      let damage = damage * drop;
-      let shots = (100.0 / damage).ceil();
-      let ttk = (shots - 1.0) * punish;
-      let ttk_str = format!("{shots:.0} {damage:.1} {ttk:.1}");
-      widths[i] = widths[i].max(ttk_str.chars().count());
-      ttks_cache.push(ttk_str);
-    }
-  }
-
-  let total_width = 3 * widths.len() + widths.iter().sum::<usize>() - 1;
-  let mut retbuffer = String::with_capacity(50 * total_width);
-
-  let buffer_write = |
-    buffer: &mut String, lhs: &str, join: &str, rhs: &str
-  | {
-    buffer.push_str(lhs);
-    for (i, &width) in widths.iter().enumerate() {
-      buffer.extend(repeat(hor).take(width + 2));
-      if i < widths.len() - 1 { buffer.push_str(join); }
-    }
-    buffer.push_str(rhs); buffer.push('\n');
-  };
-
-  buffer_write(&mut retbuffer, tlhs, hor, trhs);
-
-  let title_inner = format!(" Punishment is {punish:.1} ms ");
-  let pad_len = total_width.saturating_sub(title_inner.chars().count());
-
-  retbuffer.push_str(ljoin);
-  retbuffer.extend(repeat(hor).take(pad_len / 2));
-  retbuffer.push_str(&title_inner);
-  retbuffer.extend(repeat(hor).take(pad_len - pad_len / 2));
-  retbuffer.push_str(rjoin); retbuffer.push('\n');
-
-  buffer_write(&mut retbuffer, ljoin, tjoin, rjoin);
-
-  write!(retbuffer, "{ver} {part_drop:width$} ", width = widths[0]).ok();
-  for (i, drop_str) in (1..).zip(drop_cache.iter()) {
-    write!(retbuffer, "{ver} {drop_str:width$} ", width = widths[i]).ok();
-  }
-  writeln!(retbuffer, "{ver}").ok();
-
-  buffer_write(&mut retbuffer, ljoin, mjoin, rjoin);
-
-  let mut cache_iter = ttks_cache.into_iter();
-  for (i, part) in PARTS.iter().enumerate() {
-    write!(retbuffer, "{ver} {part:width$} ", width = widths[0]).ok();
-    for ii in 1..(drops.len() + 1) {
-      let ttk = cache_iter.next().unwrap();
-      write!(retbuffer, "{ver} {ttk:width$} ", width = widths[ii]).ok();
-    }
-    writeln!(retbuffer, "{ver}").ok();
-    if i != damages.len() - 1 {
-      buffer_write(&mut retbuffer, ljoin, mjoin, rjoin);
-    }
-  }
-
-  buffer_write(&mut retbuffer, blhs, bjoin, brhs);
-  Ok(retbuffer)
-}
+const PAD_A: i32 = 10; const INP_X: i32 = 255; const RES_X: i32 = 375;
+const LBL_W: i32 = 235; const WIDTH: i32 = 100; const HEIGHT: i32 = 30;
+const WIN_W: i32 = 365; const WIN_H: i32 = 320; const ROW_H: i32 = 25;
 
 fn validate_input(input: &mut Input, re: Regex) {
   let mut last_valid = input.value();
@@ -113,10 +28,6 @@ fn validate_input(input: &mut Input, re: Regex) {
     }
   });
 }
-
-const PAD_A: i32 = 10; const INP_X: i32 = 255; const RES_X: i32 = 375;
-const LBL_W: i32 = 235; const INP_W: i32 = 100; const ROW_H: i32 = 25;
-const WIN_W: i32 = 365; const WIN_H: i32 = 350; const STEP: i32 = 30;
 
 fn main() {
   let delta_app = app::App::default().with_scheme(app::Scheme::Gtk);
@@ -138,9 +49,9 @@ fn main() {
       .with_size(LBL_W, ROW_H).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
 
-    let mut input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
+    let mut input = Input::default().with_pos(INP_X, row_px).with_size(WIDTH, ROW_H);
     validate_input(&mut input, damage_re.clone());
-    row_px += STEP;
+    row_px += HEIGHT;
 
     input
   });
@@ -185,20 +96,20 @@ fn main() {
   frame.set_align(Align::Center | Align::Inside);
 
   let drop_re = Regex::new(r"^((1|0|0?[.,]\d+) )*(1|0|0?[.,]\d*)?$").unwrap();
-  let mut drop_input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
+  let mut drop_input = Input::default().with_pos(INP_X, row_px).with_size(WIDTH, ROW_H);
   validate_input(&mut drop_input, drop_re.clone());
-  row_px += STEP;
+  row_px += HEIGHT;
 
   let mut frame = Frame::default().with_pos(PAD_A, row_px)
     .with_size(LBL_W, ROW_H).with_label("Weapon firerate (shots per minute):");
   frame.set_align(Align::Center | Align::Inside);
 
   let rate_re = Regex::new(r"^\d+[.,]?\d*$").unwrap();
-  let mut rate_input = Input::default().with_pos(INP_X, row_px).with_size(INP_W, ROW_H);
+  let mut rate_input = Input::default().with_pos(INP_X, row_px).with_size(WIDTH, ROW_H);
   validate_input(&mut rate_input, rate_re.clone());
-  row_px += STEP;
+  row_px += HEIGHT;
 
-  let mut calc_btn = Button::default().with_size(LBL_W + PAD_A + INP_W, ROW_H)
+  let mut calc_btn = Button::default().with_size(LBL_W + PAD_A + WIDTH, ROW_H)
     .with_pos(PAD_A, row_px).with_label("Calculate TTK for this weapon");
   calc_btn.set_align(Align::Center | Align::Inside);
 
@@ -215,9 +126,7 @@ fn main() {
     false
   });
 
-  let mut result_label = Frame::default().with_pos(RES_X, PAD_A).with_size(0, 0);
-  result_label.set_label_font(Font::Courier);
-  result_label.set_align(Align::Center | Align::Inside);
+  let mut result_table = TableRow::default().with_pos(RES_X, PAD_A).with_size(0, 0);
 
   window.end(); window.show();
 
@@ -225,42 +134,76 @@ fn main() {
   let mut window_clone = window.clone();
 
   calc_btn.set_callback(move |_| {
-    let process = || -> Result<String, String> {
-      let mut damages = [0.0; PARTS.len()];
+    let mut damages = [0.0; PARTS.len()];
 
-      for (i, input) in damage_inputs.iter().enumerate() {
-        if input.value().is_empty() { return Err(DAMAGE_ERROR.into()); }
-        let mut s = input.value().replace(",", ".");
-        s.retain(|c| !c.is_whitespace());
-        let s = s.trim_end_matches('.').trim_end_matches('*');
-        if let Some((a, b)) = s.split_once('*') {
-          let n1 = a.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
-          let n2 = b.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
-          damages[i] = n1 * n2; continue;
-        }
-        damages[i] = s.parse::<f64>().map_err(|_| DAMAGE_ERROR.to_string())?;
+    for (i, input) in damage_inputs.iter().enumerate() {
+      if input.value().is_empty() { return; }
+      let mut s = input.value().replace(",", ".");
+      s.retain(|c| !c.is_whitespace());
+      let s = s.trim_end_matches('.').trim_end_matches('*');
+      if let Some((a, b)) = s.split_once('*') {
+        damages[i] = a.parse::<f64>().unwrap_or(0.0) * b.parse::<f64>().unwrap_or(0.0);
+      } else {
+        damages[i] = s.parse::<f64>().unwrap_or(0.0);
       }
-
-      let mut drops: Vec<f64> = drop_input.value().replace(",", ".")
-        .split_whitespace().filter(|&s| s != ".")
-        .map(|s| s.parse::<f64>().map_err(|_| DROP_ERROR.into()))
-        .collect::<Result<Vec<f64>, String>>()?;
-
-      let rate: f64 = rate_input.value().replace(",", ".")
-        .parse::<f64>().map_err(|_| FIRERATE_ERROR.to_string())?;
-
-      drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
-      get_ttk_table(&damages, &drops, rate)
-    };
-
-    match process() {
-      Ok(result_table) => result_label.set_label(&result_table),
-      Err(error) => result_label.set_label(&format!("An error occurred:\n{error}"))
     }
 
-    let (text_w, text_h) = result_label.measure_label();
-    window_clone.set_size(2 * PAD_A + RES_X + text_w, WIN_H.max(2 * PAD_A + text_h));
-    result_label.resize(RES_X, PAD_A, text_w, text_h);
+    let mut drops: Vec<f64> = drop_input.value().replace(",", ".").split_whitespace()
+      .filter(|&s| s != ".").filter_map(|s| s.parse::<f64>().ok()).collect();
+
+    let rate = rate_input.value().replace(",", ".").parse::<f64>().unwrap_or(0.0);
+
+    drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
+    if rate <= 0.0 || drops.is_empty() { return; }
+
+    let punish = 60000.0 / rate;
+    let mut table_data = Vec::<Vec<String>>::with_capacity(damages.len() + 1);
+
+    let mut header = vec!["Part / Drop".to_string()];
+    for drop in &drops { header.push(format!("{drop}x")); }
+    table_data.push(header);
+
+    // Cria as linhas do corpo
+    for (i, &damage) in damages.iter().enumerate() {
+      let mut row = Vec::<String>::with_capacity(drops.len() + 1);
+      row.push(PARTS[i].to_string());
+      for &drop in &drops {
+        let shots = (100.0 / damage / drop).ceil();
+        let ttk = (shots - 1.0) * punish;
+        row.push(format!("{shots}t | {ttk:.1}"));
+      }
+      table_data.push(row);
+    }
+
+    let rows = (PARTS.len() + 1) as i32;
+    let cols = (drops.len() + 1) as i32;
+
+    TableExt::clear(&mut result_table);
+    result_table.set_rows(rows);
+    result_table.set_cols(cols);
+    result_table.set_row_header(false);
+    result_table.set_col_header(false);
+    result_table.set_row_height_all(HEIGHT);
+    result_table.set_col_width_all(WIDTH);
+
+    result_table.draw_cell(move |_, ctx, r, c, x, y, w, h| {
+      if ctx == TableContext::Cell {
+        draw::push_clip(x, y, w, h);
+
+        let bg_color = if r == 0 || c == 0 { Color::from_hex(0xdddddd) } else { Color::White };
+        draw::draw_box(FrameType::ThinUpBox, x, y, w, h, bg_color);
+
+        draw::set_draw_color(Color::Black);
+        draw::set_font(Font::Helvetica, 14);
+        draw::draw_text2(&table_data[r as usize][c as usize], x, y, w, h, Align::Center);
+
+        draw::pop_clip();
+      }
+    });
+
+    let (table_width, table_height) = (cols * WIDTH + 4, rows * HEIGHT + 4);
+    window_clone.set_size(PAD_A + RES_X + table_width, WIN_H.max(2 * PAD_A + table_height));
+    result_table.resize(RES_X, PAD_A, table_width, table_height);
 
     drop(first_input.take_focus());
   });
