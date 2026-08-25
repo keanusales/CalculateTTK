@@ -1,9 +1,9 @@
 #![windows_subsystem = "windows"]
 
 use fltk::{
-  app, button::Button, table::{TableRow, TableContext}, draw,
+  app, frame::Frame, input::Input, window::Window, button::Button,
   enums::{Align, Color, Event, Font, FrameType, Key, CallbackTrigger},
-  frame::Frame, input::Input, window::Window, image::SvgImage, prelude::*
+  table::{TableRow, TableContext}, draw, image::SvgImage, prelude::*
 };
 use std::{array::from_fn, f64};
 use regex::Regex;
@@ -138,14 +138,16 @@ fn main() {
 
     for (i, input) in damage_inputs.iter().enumerate() {
       if input.value().is_empty() { return; }
+
       let mut s = input.value().replace(",", ".");
       s.retain(|c| !c.is_whitespace());
       let s = s.trim_end_matches('.').trim_end_matches('*');
-      if let Some((a, b)) = s.split_once('*') {
-        damages[i] = a.parse::<f64>().unwrap_or(0.0) * b.parse::<f64>().unwrap_or(0.0);
+
+      damages[i] = if let Some((a, b)) = s.split_once('*') {
+        a.parse::<f64>().unwrap_or(0.0) * b.parse::<f64>().unwrap_or(0.0)
       } else {
-        damages[i] = s.parse::<f64>().unwrap_or(0.0);
-      }
+        s.parse::<f64>().unwrap_or(0.0)
+      };
     }
 
     let mut drops: Vec<f64> = drop_input.value().replace(",", ".").split_whitespace()
@@ -175,7 +177,7 @@ fn main() {
       table_data.push(row);
     }
 
-    let rows = (PARTS.len() + 1) as i32;
+    let rows = (damages.len() + 1) as i32;
     let cols = (drops.len() + 1) as i32;
 
     TableExt::clear(&mut result_table);
