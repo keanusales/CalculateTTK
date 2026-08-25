@@ -165,7 +165,6 @@ fn main() {
     for drop in &drops { header.push(format!("{drop}x")); }
     table_data.push(header);
 
-    // Cria as linhas do corpo
     for (i, &damage) in damages.iter().enumerate() {
       let mut row = Vec::<String>::with_capacity(drops.len() + 1);
       row.push(PARTS[i].to_string());
@@ -177,8 +176,7 @@ fn main() {
       table_data.push(row);
     }
 
-    let rows = (damages.len() + 1) as i32;
-    let cols = (drops.len() + 1) as i32;
+    let rows = (damages.len() + 1) as i32; let cols = (drops.len() + 1) as i32;
 
     TableExt::clear(&mut result_table);
     result_table.set_rows(rows);
