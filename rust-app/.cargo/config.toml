@@ -12,12 +12,15 @@ env = {
 linker = "clang"
 rustflags = [
   "-C", "linker-plugin-lto",
+  "-C", "lto=fat",
+  "-C", "linker=clang",
   "-C", "link-arg=-fuse-ld=lld",
-  "-C", "link-arg=-Wl,--gc-sections"
+  "-C", "link-arg=-Wl,--gc-sections",
+  "-C", "link-arg=-Wl,--exclude-libs=ALL"
 ]
 env = {
   CC = "clang",
   CXX = "clang++",
-  CFLAGS = "-flto -ffunction-sections -fdata-sections",
-  CXXFLAGS = "-flto -ffunction-sections -fdata-sections"
+  CFLAGS = "-flto=full -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -fwhole-program-vtables",
+  CXXFLAGS = "-flto=full -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -fwhole-program-vtables"
 }
