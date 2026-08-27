@@ -12,8 +12,6 @@ env = {
 linker = "clang"
 rustflags = [
   "-C", "linker-plugin-lto",
-  "-C", "lto=fat",
-  "-C", "linker=clang",
   "-C", "link-arg=-fuse-ld=lld",
   "-C", "link-arg=-Wl,--gc-sections",
   "-C", "link-arg=-Wl,--exclude-libs=ALL"
