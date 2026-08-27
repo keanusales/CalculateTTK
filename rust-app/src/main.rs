@@ -5,7 +5,7 @@ use fltk::{
   enums::{Align, Color, Event, Font, FrameType, Key, CallbackTrigger},
   table::{TableRow, TableContext}, draw, image::SvgImage, prelude::*
 };
-use std::{array::from_fn, f64};
+use std::{array::from_fn, f32};
 use regex::Regex;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
@@ -101,10 +101,10 @@ fn main() {
   row_px += HEIGHT;
 
   let mut frame = Frame::default().with_pos(PAD_A, row_px)
-    .with_size(LBL_W, ROW_H).with_label("Weapon firerate (shots per minute):");
+    .with_size(LBL_W, ROW_H).with_label("Firerate (RPM [Interval] [Size]):");
   frame.set_align(Align::Center | Align::Inside);
 
-  let rate_re = Regex::new(r"^\d+[.,]?\d*$").unwrap();
+  let rate_re = Regex::new(r"^(\d+[.,]?\d* ?){1,2}\d*$").unwrap();
   let mut rate_input = Input::default().with_pos(INP_X, row_px).with_size(WIDTH, ROW_H);
   validate_input(&mut rate_input, rate_re.clone());
   row_px += HEIGHT;
@@ -144,22 +144,31 @@ fn main() {
       let s = s.trim_end_matches('.').trim_end_matches('*');
 
       damages[i] = if let Some((a, b)) = s.split_once('*') {
-        a.parse::<f64>().unwrap_or(0.0) * b.parse::<f64>().unwrap_or(0.0)
+        a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
       } else {
-        s.parse::<f64>().unwrap_or(0.0)
+        s.parse::<f32>().unwrap_or(0.0)
       };
     }
 
-    let mut drops: Vec<f64> = drop_input.value().replace(",", ".").split_whitespace()
-      .filter(|&s| s != ".").filter_map(|s| s.parse::<f64>().ok()).collect();
+    let drops: Vec<f32> = drop_input.value().replace(",", ".").split_whitespace()
+      .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
-    let rate = rate_input.value().replace(",", ".").parse::<f64>().unwrap_or(0.0);
+    let rates: Vec<f32> = rate_input.value().replace(",", ".").split_whitespace()
+      .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
-    drops.sort_by(|a, b| b.partial_cmp(a).unwrap());
-    if rate <= 0.0 || drops.is_empty() { return; }
+    let (total_rate, large_punish, bursts) = match rates.as_slice() {
+      [a] => (*a, 60000.0 / *a, 1.0),
+      [a, b, c] => (*a, *b, *c),
+      _ => return
+    };
+
+    if total_rate <= 0.0 || large_punish <= 0.0 || bursts <= 0.0 { return; }
+
+    let small_punish = if bursts > 1.0 {
+      ((60000.0 * bursts / total_rate) - large_punish) / (bursts - 1.0)
+    } else { large_punish };
 
     let (rows, cols) = ((damages.len() + 1) as i32, (drops.len() + 1) as i32);
-
     let mut table_data = Vec::<String>::with_capacity((rows * cols) as usize);
 
     table_data.push("Part / Drop".to_string());
@@ -168,9 +177,11 @@ fn main() {
     for (i, &damage) in damages.iter().enumerate() {
       table_data.push(PARTS[i].to_string());
       for &drop in &drops {
-        let shots = (100.0 / damage / drop).ceil();
-        let ttk = 60000.0 * (shots - 1.0) / rate;
-        table_data.push(format!("{shots}t | {ttk:.1}"));
+        let intervals = ((100.0 / damage / drop).ceil() as u32).saturating_sub(1);
+        let large_burst = intervals / bursts as u32;
+        let small_burst = intervals - large_burst;
+        let ttk = (large_burst as f32 * large_punish) + (small_burst as f32 * small_punish);
+        table_data.push(format!("{}t | {ttk:.1}", intervals + 1));
       }
     }
 
@@ -181,6 +192,7 @@ fn main() {
     result_table.set_col_header(false);
     result_table.set_row_height_all(HEIGHT);
     result_table.set_col_width_all(WIDTH);
+    result_table.set_frame(FrameType::NoBox);
 
     result_table.draw_cell(move |_, ctx, r, c, x, y, w, h| {
       if ctx == TableContext::Cell {
@@ -197,7 +209,7 @@ fn main() {
       }
     });
 
-    let (table_width, table_height) = (cols * WIDTH + 4, rows * HEIGHT + 4);
+    let (table_width, table_height) = (cols * WIDTH, rows * HEIGHT);
     window_clone.set_size(PAD_A + RES_X + table_width, WIN_H.max(2 * PAD_A + table_height));
     result_table.resize(RES_X, PAD_A, table_width, table_height);
 
