@@ -168,6 +168,8 @@ fn main() {
       ((60000.0 * bursts / total_rate) - large_punish) / (bursts - 1.0)
     } else { large_punish };
 
+    if small_punish <= 0.0 { return; }
+
     let (rows, cols) = ((damages.len() + 1) as i32, (drops.len() + 1) as i32);
     let mut table_data = Vec::<String>::with_capacity((rows * cols) as usize);
 
