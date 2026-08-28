@@ -5,7 +5,7 @@ use fltk::{
   enums::{Align, Color, Event, Font, FrameType, Key, CallbackTrigger},
   table::{TableRow, TableContext}, draw, image::SvgImage, prelude::*
 };
-use std::{array::from_fn, f32};
+use std::array::from_fn;
 use regex::Regex;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
