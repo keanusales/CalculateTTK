@@ -162,7 +162,7 @@ fn main() {
       _ => return
     };
 
-    if total_rate <= 0.0 || large_punish <= 0.0 || bursts <= 0.0 { return; }
+    if total_rate <= 0.0 || large_punish <= 0.0 || bursts < 1.0 { return; }
 
     let small_punish = if bursts > 1.0 {
       ((60000.0 * bursts / total_rate) - large_punish) / (bursts - 1.0)
