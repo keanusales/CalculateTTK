@@ -194,7 +194,6 @@ fn main() {
     result_table.set_col_header(false);
     result_table.set_row_height_all(HEIGHT);
     result_table.set_col_width_all(WIDTH);
-    result_table.set_frame(FrameType::NoBox);
 
     result_table.draw_cell(move |_, ctx, r, c, x, y, w, h| {
       if ctx == TableContext::Cell {
@@ -211,7 +210,7 @@ fn main() {
       }
     });
 
-    let (table_width, table_height) = (cols * WIDTH, rows * HEIGHT);
+    let (table_width, table_height) = (cols * WIDTH + 4, rows * HEIGHT + 4);
     window_clone.set_size(PAD_A + RES_X + table_width, WIN_H.max(2 * PAD_A + table_height));
     result_table.resize(RES_X, PAD_A, table_width, table_height);
 
