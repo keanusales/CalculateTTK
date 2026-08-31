@@ -87,7 +87,7 @@ fn main() {
 
   let drop_re = Regex::new(r"^((1|0|0?[.,]\d+) )*(1|0|0?[.,]\d*)?$").unwrap();
   let mut drop_input = Input::default().with_pos(INP_X, row_px).with_size(WIDTH, ROW_H);
-  validate_input(&mut drop_input, drop_re.clone());
+  validate_input(&mut drop_input, drop_re);
   row_px += HEIGHT;
 
   let mut frame = Frame::default().with_pos(PAD_A, row_px)
@@ -96,7 +96,7 @@ fn main() {
 
   let rate_re = Regex::new(r"^(\d+[.,]?\d* ?){1,2}\d*$").unwrap();
   let mut rate_input = Input::default().with_pos(INP_X, row_px).with_size(WIDTH, ROW_H);
-  validate_input(&mut rate_input, rate_re.clone());
+  validate_input(&mut rate_input, rate_re);
   row_px += HEIGHT;
 
   let mut calc_btn = Button::default().with_size(LBL_W + PAD_A + WIDTH, ROW_H)
