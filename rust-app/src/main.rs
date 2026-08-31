@@ -5,7 +5,6 @@ use fltk::{
   enums::{Align, Color, Event, Font, FrameType, Key, CallbackTrigger},
   table::{TableRow, TableContext}, draw, image::SvgImage, prelude::*
 };
-use std::array::from_fn;
 use regex::Regex;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
@@ -17,14 +16,14 @@ const WIN_W: i32 = 365; const WIN_H: i32 = 320; const ROW_H: i32 = 25;
 fn validate_input(input: &mut Input, re: Regex) {
   let mut last_valid = input.value();
   input.set_trigger(CallbackTrigger::Changed);
-  input.set_callback(move |i| {
-    let current = i.value();
+  input.set_callback(move |input| {
+    let current = input.value();
     if current.is_empty() || re.is_match(&current) {
       last_valid = current;
     } else {
-      let pos = (i.position() - 1).max(0);
-      i.set_value(&last_valid);
-      let _ = i.set_position(pos);
+      let pos = (input.position() - 1).max(0);
+      input.set_value(&last_valid);
+      let _ = input.set_position(pos);
     }
   });
 }
@@ -42,9 +41,7 @@ fn main() {
 
   let mut row_px = PAD_A;
   let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
-  let damage_inputs: [Input; PARTS.len()] = from_fn(|i| {
-    let part = PARTS[i];
-
+  let damage_inputs = PARTS.map(|part| {
     let mut frame = Frame::default().with_pos(PAD_A, row_px)
       .with_size(LBL_W, ROW_H).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
@@ -52,7 +49,6 @@ fn main() {
     let mut input = Input::default().with_pos(INP_X, row_px).with_size(WIDTH, ROW_H);
     validate_input(&mut input, damage_re.clone());
     row_px += HEIGHT;
-
     input
   });
 
@@ -125,20 +121,18 @@ fn main() {
   let mut window_clone = window.clone();
 
   calc_btn.set_callback(move |_| {
-    let mut damages = [0.0; PARTS.len()];
+    if damage_inputs.iter().any(|input| input.value().is_empty()) { return; }
 
-    for (i, input) in damage_inputs.iter().enumerate() {
-      if input.value().is_empty() { return; }
-
+    let damages: Vec<f32> = damage_inputs.iter().map(|input| {
       let s = input.value().replace(",", ".").replace(" ", "");
       let s = s.trim_end_matches('.').trim_end_matches('*');
 
-      damages[i] = if let Some((a, b)) = s.split_once('*') {
+      if let Some((a, b)) = s.split_once('*') {
         a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
       } else {
         s.parse::<f32>().unwrap_or(0.0)
-      };
-    }
+      }
+    }).collect();
 
     let drops: Vec<f32> = drop_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
@@ -160,14 +154,14 @@ fn main() {
 
     if small_punish <= 0.0 { return; }
 
-    let (rows, cols) = ((damages.len() + 1) as i32, (drops.len() + 1) as i32);
-    let mut table_data = Vec::<String>::with_capacity((rows * cols) as usize);
+    let (rows, cols) = (damages.len() + 1, drops.len() + 1);
+    let mut table_data = Vec::<String>::with_capacity(rows * cols);
 
     table_data.push("Part / Drop".to_string());
     for drop in &drops { table_data.push(format!("{drop}x")); }
 
-    for (i, &damage) in damages.iter().enumerate() {
-      table_data.push(PARTS[i].to_string());
+    for (&part, &damage) in PARTS.iter().zip(&damages) {
+      table_data.push(part.to_string());
       for &drop in &drops {
         let intervals = ((100.0 / damage / drop).ceil() as u32).saturating_sub(1);
         let large_burst = intervals / bursts as u32;
@@ -178,12 +172,9 @@ fn main() {
     }
 
     TableExt::clear(&mut result_table);
-    result_table.set_rows(rows);
-    result_table.set_cols(cols);
-    result_table.set_row_header(false);
-    result_table.set_col_header(false);
-    result_table.set_row_height_all(HEIGHT);
-    result_table.set_col_width_all(WIDTH);
+    result_table.set_rows(rows as i32); result_table.set_cols(cols as i32);
+    result_table.set_row_header(false); result_table.set_col_header(false);
+    result_table.set_row_height_all(HEIGHT); result_table.set_col_width_all(WIDTH);
 
     result_table.draw_cell(move |_, ctx, r, c, x, y, w, h| {
       if ctx == TableContext::Cell {
@@ -191,16 +182,16 @@ fn main() {
 
         let color = if r == 0 || c == 0 { Color::from_hex(0xdddddd) } else { Color::White };
         draw::draw_box(FrameType::ThinUpBox, x, y, w, h, color);
+        draw::set_font(Font::Helvetica, 14); draw::set_draw_color(Color::Black);
 
-        draw::set_draw_color(Color::Black);
-        draw::set_font(Font::Helvetica, 14);
-        draw::draw_text2(&table_data[(r * cols + c) as usize], x, y, w, h, Align::Center);
+        let index = r as usize * cols + c as usize;
+        draw::draw_text2(&table_data[index], x, y, w, h, Align::Center);
 
         draw::pop_clip();
       }
     });
 
-    let (table_width, table_height) = (cols * WIDTH + 4, rows * HEIGHT + 4);
+    let (table_width, table_height) = (cols as i32 * WIDTH + 4, rows as i32 * HEIGHT + 4);
     window_clone.set_size(PAD_A + RES_X + table_width, WIN_H.max(2 * PAD_A + table_height));
     result_table.resize(RES_X, PAD_A, table_width, table_height);
 
