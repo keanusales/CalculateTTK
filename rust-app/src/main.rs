@@ -56,7 +56,8 @@ fn main() {
     input
   });
 
-  for (i, current) in damage_inputs.iter_mut().enumerate() {
+  for i in 0..damage_inputs.len() {
+    let mut current = damage_inputs[i].clone();
     let inputs = damage_inputs.clone(); 
 
     current.handle(move |widget, event| {
@@ -129,8 +130,8 @@ fn main() {
     for (i, input) in damage_inputs.iter().enumerate() {
       if input.value().is_empty() { return; }
 
-      let s = input.value().replace(",", ".").replace(" ", "")
-        .trim_end_matches('.').trim_end_matches('*');
+      let s = input.value().replace(",", ".").replace(" ", "");
+      let s = s.trim_end_matches('.').trim_end_matches('*');
 
       damages[i] = if let Some((a, b)) = s.split_once('*') {
         a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
