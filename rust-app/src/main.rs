@@ -24,7 +24,7 @@ fn validate_input(input: &mut Input, re: Regex) {
     } else {
       let pos = (i.position() - 1).max(0);
       i.set_value(&last_valid);
-      drop(i.set_position(pos));
+      let _ = i.set_position(pos);
     }
   });
 }
@@ -56,33 +56,23 @@ fn main() {
     input
   });
 
-  for i in 0..damage_inputs.len() {
-    let mut current = damage_inputs[i].clone();
-
-    let up_target = if i > 0 {
-      Some(damage_inputs[i - 1].clone())
-    } else { None };
-
-    let down_target = if i < damage_inputs.len() - 1 {
-      Some(damage_inputs[i + 1].clone())
-    } else { None };
+  for (i, current) in damage_inputs.iter_mut().enumerate() {
+    let inputs = damage_inputs.clone(); 
 
     current.handle(move |widget, event| {
       if event == Event::KeyDown {
         match app::event_key() {
-          Key::Down => {
-            if let Some(mut target) = down_target.clone() {
-              target.set_value(&widget.value());
-              drop(target.take_focus());
-              return true;
-            }
+          Key::Down if i + 1 < inputs.len() => {
+            let mut target = inputs[i + 1].clone();
+            target.set_value(&widget.value());
+            let _ = target.take_focus();
+            return true;
           }
-          Key::Up => {
-            if let Some(mut target) = up_target.clone() {
-              target.set_value(&widget.value());
-              drop(target.take_focus());
-              return true;
-            }
+          Key::Up if i > 0 => {
+            let mut target = inputs[i - 1].clone();
+            target.set_value(&widget.value());
+            let _ = target.take_focus();
+            return true;
           }
           _ => {}
         }
@@ -139,9 +129,8 @@ fn main() {
     for (i, input) in damage_inputs.iter().enumerate() {
       if input.value().is_empty() { return; }
 
-      let mut s = input.value().replace(",", ".");
-      s.retain(|c| !c.is_whitespace());
-      let s = s.trim_end_matches('.').trim_end_matches('*');
+      let s = input.value().replace(",", ".").replace(" ", "")
+        .trim_end_matches('.').trim_end_matches('*');
 
       damages[i] = if let Some((a, b)) = s.split_once('*') {
         a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
@@ -214,7 +203,7 @@ fn main() {
     window_clone.set_size(PAD_A + RES_X + table_width, WIN_H.max(2 * PAD_A + table_height));
     result_table.resize(RES_X, PAD_A, table_width, table_height);
 
-    drop(first_input.take_focus());
+    let _ = first_input.take_focus();
   });
 
   delta_app.run().unwrap();
