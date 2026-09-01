@@ -92,7 +92,7 @@ fn main() {
   row_px += HEIGHT;
 
   let mut frame = Frame::default().with_pos(PAD_A, row_px)
-    .with_size(LBL_W, ROW_H).with_label("Firerate (RPM [Interval] [Bursts]):");
+    .with_size(LBL_W, ROW_H).with_label("Rate of Fire [Interval] [Bursts]:");
   frame.set_align(Align::Center | Align::Inside);
 
   let rate_re = Regex::new(r"^(\d+[.,]?\d* ?){1,2}\d*$").unwrap();
@@ -146,7 +146,7 @@ fn main() {
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
     let (large_punish, small_punish, bursts) = match rates.as_slice() {
-      [rate] if *rate > 0.0 => (60000.0 / *rate, 60000.0 / *rate, 1u32),
+      [rate] if *rate > 0.0 => { (60000.0 / *rate, 60000.0 / *rate, 1u32) }
       [rate, punish, bursts] if (
         *rate > 0.0 && *punish > 0.0 && *bursts > 1.0 && (60000.0 * *bursts / *rate) > *punish
       ) => {
