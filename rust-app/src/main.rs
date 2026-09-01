@@ -118,10 +118,15 @@ fn main() {
   window.end(); window.show();
 
   let mut first_input = damage_inputs[0].clone();
+  let mut drop_focus = drop_input.clone();
+  let mut rate_focus = rate_input.clone();
   let mut window_clone = window.clone();
 
   calc_btn.set_callback(move |_| {
-    if damage_inputs.iter().any(|input| input.value().is_empty()) { return; }
+    if damage_inputs.iter().any(|input| input.value().is_empty()) {
+      let _ = first_input.take_focus();
+      return;
+    }
 
     let damages = damage_inputs.clone().map(|input| {
       let s = input.value().replace(",", ".").replace(" ", "");
@@ -134,25 +139,36 @@ fn main() {
       }
     });
 
+    if damages.iter().any(|&d| d <= 0.0) {
+      let _ = first_input.take_focus();
+      return;
+    }
+
     let drops: Vec<f32> = drop_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
+
+    if drops.is_empty() {
+      let _ = drop_focus.take_focus();
+      return;
+    }
 
     let rates: Vec<f32> = rate_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
-    let (total_rate, large_punish, bursts) = match rates.as_slice() {
-      [a] => (*a, 60000.0 / *a, 1.0),
-      [a, b, c] => (*a, *b, *c),
-      _ => return
+    let (large_punish, small_punish, bursts) = match rates.as_slice() {
+      [rate] if *rate > 0.0 => (60000.0 / *rate, 60000.0 / *rate, 1.0),
+
+      [rate, punish, bursts] if (
+        (*rate, *punish, *bursts, (60000.0 * *bursts / *rate)) > (0.0, 0.0, 1.0, *punish)
+      ) => {
+        (*punish, ((60000.0 * *bursts / *rate) - *punish) / (*bursts - 1.0), *bursts)
+      }
+
+      _ => {
+        let _ = rate_focus.take_focus();
+        return;
+      }
     };
-
-    if total_rate <= 0.0 || large_punish <= 0.0 || bursts < 1.0 { return; }
-
-    let small_punish = if bursts > 1.0 {
-      ((60000.0 * bursts / total_rate) - large_punish) / (bursts - 1.0)
-    } else { large_punish };
-
-    if small_punish <= 0.0 { return; }
 
     let (rows, cols) = (damages.len() + 1, drops.len() + 1);
     let mut table_data = Vec::<String>::with_capacity(rows * cols);
