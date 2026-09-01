@@ -16,9 +16,33 @@ rustflags = [
   "-C", "link-arg=-Wl,--gc-sections",
   "-C", "link-arg=-Wl,--exclude-libs=ALL"
 ]
-env = {
-  CC = "clang",
-  CXX = "clang++",
-  CFLAGS = "-flto=full -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -fwhole-program-vtables",
-  CXXFLAGS = "-flto=full -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden -fwhole-program-vtables"
-}
+
+[target.x86_64-unknown-linux-gnu.env]
+CC = "clang"
+CXX = "clang++"
+
+CFLAGS = """\
+  -flto=full \
+  -ffunction-sections \
+  -fdata-sections \
+  -fvisibility=hidden \
+  -fvisibility-inlines-hidden \
+  -fwhole-program-vtables \
+  -fno-exceptions \
+  -fno-rtti \
+  -fno-unwind-tables \
+  -fno-asynchronous-unwind-tables \
+"""
+
+CXXFLAGS = """\
+  -flto=full \
+  -ffunction-sections \
+  -fdata-sections \
+  -fvisibility=hidden \
+  -fvisibility-inlines-hidden \
+  -fwhole-program-vtables \
+  -fno-exceptions \
+  -fno-rtti \
+  -fno-unwind-tables \
+  -fno-asynchronous-unwind-tables \
+"""
