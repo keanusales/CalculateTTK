@@ -123,34 +123,30 @@ fn main() {
   let mut window_clone = window.clone();
 
   calc_btn.set_callback(move |_| {
-    if damage_inputs.iter().any(|input| input.value().is_empty()) {
-      let _ = first_input.take_focus();
-      return;
-    }
+    let mut damages_clone = damage_inputs.clone();
+    let mut damages = [0.0; PARTS.len()];
 
-    let damages = damage_inputs.clone().map(|input| {
-      let s = input.value().replace(",", ".").replace(" ", "");
+    for (input, damage) in damages_clone.iter_mut().zip(&mut damages) {
+      let value = input.value();
+
+      if value.is_empty() { let _ = input.take_focus(); return; }
+
+      let s = value.replace(",", ".").replace(" ", "");
       let s = s.trim_end_matches('.').trim_end_matches('*');
 
-      if let Some((a, b)) = s.split_once('*') {
+      *damage = if let Some((a, b)) = s.split_once('*') {
         a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
       } else {
         s.parse::<f32>().unwrap_or(0.0)
-      }
-    });
+      };
 
-    if damages.iter().any(|&d| d <= 0.0) {
-      let _ = first_input.take_focus();
-      return;
+      if *damage <= 0.0 { let _ = input.take_focus(); return; }
     }
 
     let drops: Vec<f32> = drop_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
-    if drops.is_empty() {
-      let _ = drop_focus.take_focus();
-      return;
-    }
+    if drops.is_empty() { let _ = drop_focus.take_focus(); return; }
 
     let rates: Vec<f32> = rate_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
@@ -159,15 +155,12 @@ fn main() {
       [rate] if *rate > 0.0 => (60000.0 / *rate, 60000.0 / *rate, 1.0),
 
       [rate, punish, bursts] if (
-        (*rate, *punish, *bursts, (60000.0 * *bursts / *rate)) > (0.0, 0.0, 1.0, *punish)
+        *rate > 0.0 && *punish > 0.0 && *bursts > 1.0 && (60000.0 * *bursts / *rate) > *punish
       ) => {
         (*punish, ((60000.0 * *bursts / *rate) - *punish) / (*bursts - 1.0), *bursts)
       }
 
-      _ => {
-        let _ = rate_focus.take_focus();
-        return;
-      }
+      _ => { let _ = rate_focus.take_focus(); return; }
     };
 
     let (rows, cols) = (damages.len() + 1, drops.len() + 1);
