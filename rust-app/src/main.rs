@@ -5,6 +5,7 @@ use fltk::{
   enums::{Align, Color, Event, Font, FrameType, Key, CallbackTrigger},
   table::{TableRow, TableContext}, draw, image::SvgImage, prelude::*
 };
+use std::array::from_fn;
 use regex::Regex;
 
 const PARTS: [&str; 7] = ["Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"];
@@ -123,8 +124,8 @@ fn main() {
   calc_btn.set_callback(move |_| {
     if damage_inputs.iter().any(|input| input.value().is_empty()) { return; }
 
-    let damages: Vec<f32> = damage_inputs.iter().map(|input| {
-      let s = input.value().replace(",", ".").replace(" ", "");
+    let damages: [f32; PARTS.len()] = from_fn(|i| {
+      let s = damage_inputs[i].value().replace(",", ".").replace(" ", "");
       let s = s.trim_end_matches('.').trim_end_matches('*');
 
       if let Some((a, b)) = s.split_once('*') {
@@ -132,7 +133,7 @@ fn main() {
       } else {
         s.parse::<f32>().unwrap_or(0.0)
       }
-    }).collect();
+    });
 
     let drops: Vec<f32> = drop_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
