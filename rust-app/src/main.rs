@@ -54,7 +54,7 @@ fn main() {
 
   for i in 0..damage_inputs.len() {
     let mut current = damage_inputs[i].clone();
-    let inputs = damage_inputs.clone(); 
+    let inputs = damage_inputs.clone();
 
     current.handle(move |widget, event| {
       if event == Event::KeyDown {
