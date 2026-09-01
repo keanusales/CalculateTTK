@@ -186,7 +186,6 @@ fn main() {
 
         let index = r as usize * cols + c as usize;
         draw::draw_text2(&table_data[index], x, y, w, h, Align::Center);
-
         draw::pop_clip();
       }
     });
