@@ -132,9 +132,7 @@ fn main() {
 
       *damage = if let Some((a, b)) = s.split_once('*') {
         a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
-      } else {
-        s.parse::<f32>().unwrap_or(0.0)
-      };
+      } else { s.parse::<f32>().unwrap_or(0.0) };
 
       if *damage <= 0.0 { let _ = input.take_focus(); return; }
     }
@@ -149,13 +147,11 @@ fn main() {
 
     let (large_punish, small_punish, bursts) = match rates.as_slice() {
       [rate] if *rate > 0.0 => (60000.0 / *rate, 60000.0 / *rate, 1u32),
-
       [rate, punish, bursts] if (
         *rate > 0.0 && *punish > 0.0 && *bursts > 1.0 && (60000.0 * *bursts / *rate) > *punish
       ) => {
         (*punish, ((60000.0 * *bursts / *rate) - *punish) / (*bursts - 1.0), *bursts as u32)
       }
-
       _ => { let _ = rate_input.take_focus(); return; }
     };
 
