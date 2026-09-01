@@ -41,7 +41,7 @@ fn main() {
 
   let mut row_px = PAD_A;
   let damage_re = Regex::new(r"^\d+[.,]?\d* ?(\* ?\d*[.,]?\d*)?$").unwrap();
-  let damage_inputs = PARTS.map(|part| {
+  let mut damage_inputs = PARTS.map(|part| {
     let mut frame = Frame::default().with_pos(PAD_A, row_px)
       .with_size(LBL_W, ROW_H).with_label(&format!("Damage value for {part}:"));
     frame.set_align(Align::Center | Align::Inside);
@@ -52,22 +52,26 @@ fn main() {
     input
   });
 
-  for i in 0..damage_inputs.len() {
-    let mut current = damage_inputs[i].clone();
-    let inputs = damage_inputs.clone();
+  for (i, input) in damage_inputs.iter().enumerate() {
+    let mut target_up = if i > 0 {
+      Some(damage_inputs[i - 1].clone())
+    } else { None };
 
-    current.handle(move |widget, event| {
+    let mut target_down = if i + 1 < damage_inputs.len() {
+      Some(damage_inputs[i + 1].clone())
+    } else { None };
+
+    let mut current = input.clone();
+    current.handle(move |current, event| {
       if event == Event::KeyDown {
         match app::event_key() {
-          Key::Down if i + 1 < inputs.len() => {
-            let mut target = inputs[i + 1].clone();
-            target.set_value(&widget.value());
+          Key::Down if let Some(target) = target_down.as_mut() => {
+            target.set_value(&current.value());
             let _ = target.take_focus();
             return true;
           }
-          Key::Up if i > 0 => {
-            let mut target = inputs[i - 1].clone();
-            target.set_value(&widget.value());
+          Key::Up if let Some(target) = target_up.as_mut() => {
+            target.set_value(&current.value());
             let _ = target.take_focus();
             return true;
           }
@@ -88,7 +92,7 @@ fn main() {
   row_px += HEIGHT;
 
   let mut frame = Frame::default().with_pos(PAD_A, row_px)
-    .with_size(LBL_W, ROW_H).with_label("Firerate (RPM [Interval] [Size]):");
+    .with_size(LBL_W, ROW_H).with_label("Firerate (RPM [Interval] [Bursts]):");
   frame.set_align(Align::Center | Align::Inside);
 
   let rate_re = Regex::new(r"^(\d+[.,]?\d* ?){1,2}\d*$").unwrap();
@@ -100,7 +104,7 @@ fn main() {
     .with_pos(PAD_A, row_px).with_label("Calculate TTK for this weapon");
   calc_btn.set_align(Align::Center | Align::Inside);
 
-  calc_btn.handle(move |button, event| {
+  calc_btn.handle(|button, event| {
     if event == Event::KeyDown {
       match app::event_key() {
         Key::KPEnter | Key::Enter => {
@@ -114,21 +118,13 @@ fn main() {
   });
 
   let mut result_table = TableRow::default().with_pos(RES_X, PAD_A).with_size(0, 0);
-
   window.end(); window.show();
 
-  let mut first_input = damage_inputs[0].clone();
-  let mut drop_focus = drop_input.clone();
-  let mut rate_focus = rate_input.clone();
-  let mut window_clone = window.clone();
-
   calc_btn.set_callback(move |_| {
-    let mut damages_clone = damage_inputs.clone();
     let mut damages = [0.0; PARTS.len()];
 
-    for (input, damage) in damages_clone.iter_mut().zip(&mut damages) {
+    for (input, damage) in damage_inputs.iter_mut().zip(&mut damages) {
       let value = input.value();
-
       if value.is_empty() { let _ = input.take_focus(); return; }
 
       let s = value.replace(",", ".").replace(" ", "");
@@ -146,21 +142,21 @@ fn main() {
     let drops: Vec<f32> = drop_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
-    if drops.is_empty() { let _ = drop_focus.take_focus(); return; }
+    if drops.is_empty() { let _ = drop_input.take_focus(); return; }
 
     let rates: Vec<f32> = rate_input.value().replace(",", ".").split_whitespace()
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
     let (large_punish, small_punish, bursts) = match rates.as_slice() {
-      [rate] if *rate > 0.0 => (60000.0 / *rate, 60000.0 / *rate, 1.0),
+      [rate] if *rate > 0.0 => (60000.0 / *rate, 60000.0 / *rate, 1u32),
 
       [rate, punish, bursts] if (
         *rate > 0.0 && *punish > 0.0 && *bursts > 1.0 && (60000.0 * *bursts / *rate) > *punish
       ) => {
-        (*punish, ((60000.0 * *bursts / *rate) - *punish) / (*bursts - 1.0), *bursts)
+        (*punish, ((60000.0 * *bursts / *rate) - *punish) / (*bursts - 1.0), *bursts as u32)
       }
 
-      _ => { let _ = rate_focus.take_focus(); return; }
+      _ => { let _ = rate_input.take_focus(); return; }
     };
 
     let (rows, cols) = (damages.len() + 1, drops.len() + 1);
@@ -173,7 +169,7 @@ fn main() {
       table_data.push(part.to_string());
       for &drop in &drops {
         let intervals = ((100.0 / damage / drop).ceil() as u32).saturating_sub(1);
-        let large_burst = intervals / bursts as u32;
+        let large_burst = intervals / bursts;
         let small_burst = intervals - large_burst;
         let ttk = (large_burst as f32 * large_punish) + (small_burst as f32 * small_punish);
         table_data.push(format!("{}t | {ttk:.1}", intervals + 1));
@@ -200,10 +196,10 @@ fn main() {
     });
 
     let (table_width, table_height) = (cols as i32 * WIDTH + 4, rows as i32 * HEIGHT + 4);
-    window_clone.set_size(PAD_A + RES_X + table_width, WIN_H.max(2 * PAD_A + table_height));
+    window.set_size(PAD_A + RES_X + table_width, WIN_H.max(2 * PAD_A + table_height));
     result_table.resize(RES_X, PAD_A, table_width, table_height);
 
-    let _ = first_input.take_focus();
+    let _ = damage_inputs[0].take_focus();
   });
 
   delta_app.run().unwrap();
