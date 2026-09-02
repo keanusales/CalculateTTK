@@ -12,7 +12,7 @@ winres = "0.1"
 
 [profile.release]
 opt-level = "z"
-lto = true
+lto = "fat"
 strip = true
 codegen-units = 1
 panic = "abort"
