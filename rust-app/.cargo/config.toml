@@ -13,6 +13,7 @@ linker = "clang"
 
 rustflags = [
   "-C", "linker-plugin-lto",
+  "-C", "force-unwind-tables=no",
   "-C", "link-arg=-fuse-ld=lld",
   "-C", "link-arg=-Wl,--lto-O3",
   "-C", "link-arg=-Wl,--gc-sections",
@@ -24,35 +25,5 @@ rustflags = [
 [target.x86_64-unknown-linux-gnu.env]
 CC = "clang"
 CXX = "clang++"
-
-CFLAGS = """\
-  -flto=full \
-  -ffunction-sections \
-  -fdata-sections \
-  -fvisibility=hidden \
-  -fvisibility-inlines-hidden \
-  -fwhole-program-vtables \
-  -fno-semantic-interposition \
-  -fno-plt \
-  -fomit-frame-pointer \
-  -fno-exceptions \
-  -fno-rtti \
-  -fno-unwind-tables \
-  -fno-asynchronous-unwind-tables \
-"""
-
-CXXFLAGS = """\
-  -flto=full \
-  -ffunction-sections \
-  -fdata-sections \
-  -fvisibility=hidden \
-  -fvisibility-inlines-hidden \
-  -fwhole-program-vtables \
-  -fno-semantic-interposition \
-  -fno-plt \
-  -fomit-frame-pointer \
-  -fno-exceptions \
-  -fno-rtti \
-  -fno-unwind-tables \
-  -fno-asynchronous-unwind-tables \
-"""
+CFLAGS = "-flto=full"
+CXXFLAGS = "-flto=full"
