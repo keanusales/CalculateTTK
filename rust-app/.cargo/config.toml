@@ -15,7 +15,7 @@ rustflags = [
   "-C", "linker-plugin-lto",
   "-C", "force-unwind-tables=no",
   "-C", "link-arg=-fuse-ld=lld",
-  "-C", "link-arg=-Wl,--lto-O3",
+  "-C", "link-arg=-Wl,--lto-O2",
   "-C", "link-arg=-Wl,--gc-sections",
   "-C", "link-arg=-Wl,--icf=all",
   "-C", "link-arg=-Wl,-z,pack-relative-relocs",
