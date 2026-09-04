@@ -127,9 +127,8 @@ fn main() {
       let value = input.value();
       if value.is_empty() { let _ = input.take_focus(); return; }
 
-      let s: String = value.chars().filter_map(|char| match char {
-        ' ' => None, ',' => Some('.'), _ => Some(char)
-      }).collect();
+      let s: String = value.chars().filter_map(|char| match char
+        { ' ' => None, ',' => Some('.'), _ => Some(char) }).collect();
       let s = s.trim_end_matches(['.', '*']);
 
       *damage = if let Some((a, b)) = s.split_once('*') {
