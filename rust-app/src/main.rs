@@ -127,8 +127,8 @@ fn main() {
       let value = input.value();
       if value.is_empty() { let _ = input.take_focus(); return; }
 
-      let s: String = value.chars().filter_map(|char| match char
-        { ' ' => None, ',' => Some('.'), _ => Some(char) }).collect();
+      let s: String = value.chars().filter_map(|c| match c
+        { ' ' => None, ',' => Some('.'), _ => Some(c) }).collect();
       let s = s.trim_end_matches(['.', '*']);
 
       *damage = if let Some((a, b)) = s.split_once('*') {
@@ -165,7 +165,7 @@ fn main() {
     for (&part, &damage) in PARTS.iter().zip(&damages) {
       table_data.push(part.to_string());
       for &drop in &drops {
-        let intervals = ((100.0 / damage / drop).ceil() - 1.0).max(0.0);
+        let intervals = ((100.0 / (damage * drop)).ceil() - 1.0).max(0.0);
         let large_burst = (intervals / bursts).trunc();
         let small_burst = intervals - large_burst;
         let ttk = large_burst * large_punish + small_burst * small_punish;
