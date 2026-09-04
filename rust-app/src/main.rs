@@ -127,8 +127,10 @@ fn main() {
       let value = input.value();
       if value.is_empty() { let _ = input.take_focus(); return; }
 
-      let s = value.replace(",", ".").replace(" ", "");
-      let s = s.trim_end_matches('.').trim_end_matches('*');
+      let s: String = value.chars().filter_map(|char| match char {
+        ' ' => None, ',' => Some('.'), _ => Some(char)
+      }).collect();
+      let s = s.trim_end_matches(['.', '*']);
 
       *damage = if let Some((a, b)) = s.split_once('*') {
         a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
@@ -146,11 +148,11 @@ fn main() {
       .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
     let (large_punish, small_punish, bursts) = match rates.as_slice() {
-      [rate] if *rate > 0.0 => { (60000.0 / *rate, 60000.0 / *rate, 1u32) }
-      [rate, punish, bursts] if (
-        *rate > 0.0 && *punish > 0.0 && *bursts > 1.0 && (60000.0 * *bursts / *rate) > *punish
+      &[rate] if rate > 0.0 => { (60000.0 / rate, 60000.0 / rate, 1f32) }
+      &[rate, punish, bursts] if (
+        rate > 0.0 && punish > 0.0 && bursts > 1.0 && (60000.0 * bursts / rate) > punish
       ) => {
-        (*punish, ((60000.0 * *bursts / *rate) - *punish) / (*bursts - 1.0), *bursts as u32)
+        (punish, ((60000.0 * bursts / rate) - punish) / (bursts - 1.0), bursts)
       }
       _ => { let _ = rate_input.take_focus(); return; }
     };
@@ -164,11 +166,11 @@ fn main() {
     for (&part, &damage) in PARTS.iter().zip(&damages) {
       table_data.push(part.to_string());
       for &drop in &drops {
-        let intervals = ((100.0 / damage / drop).ceil() as u32).saturating_sub(1);
-        let large_burst = intervals / bursts;
+        let intervals = ((100.0 / damage / drop).ceil() - 1.0).max(0.0);
+        let large_burst = (intervals / bursts).trunc();
         let small_burst = intervals - large_burst;
-        let ttk = (large_burst as f32 * large_punish) + (small_burst as f32 * small_punish);
-        table_data.push(format!("{}t | {ttk:.1}", intervals + 1));
+        let ttk = large_burst * large_punish + small_burst * small_punish;
+        table_data.push(format!("{}t | {ttk:.1}", intervals + 1.0));
       }
     }
 
