@@ -165,7 +165,7 @@ fn main() {
     for (&part, &damage) in PARTS.iter().zip(&damages) {
       table_data.push(part.to_string());
       for &drop in &drops {
-        let intervals = ((100.0 / (damage * drop)).ceil() - 1.0).max(0.0);
+        let intervals = ((100.0 / damage / drop).ceil() - 1.0).max(0.0);
         let large_burst = (intervals / bursts).trunc();
         let small_burst = intervals - large_burst;
         let ttk = large_burst * large_punish + small_burst * small_punish;
