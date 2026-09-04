@@ -121,7 +121,7 @@ fn main() {
   window.end(); window.show();
 
   calc_btn.set_callback(move |_| {
-    let mut damages = [0.0; PARTS.len()];
+    let mut damages = [0f32; PARTS.len()];
 
     for (input, damage) in damage_inputs.iter_mut().zip(&mut damages) {
       let value = input.value();
