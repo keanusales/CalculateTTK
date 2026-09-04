@@ -139,12 +139,12 @@ fn main() {
     }
 
     let drops: Vec<f32> = drop_input.value().replace(",", ".").split_whitespace()
-      .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
+      .filter(|s| *s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
     if drops.is_empty() { let _ = drop_input.take_focus(); return; }
 
     let rates: Vec<f32> = rate_input.value().replace(",", ".").split_whitespace()
-      .filter(|&s| s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
+      .filter(|s| *s != ".").filter_map(|s| s.parse::<f32>().ok()).collect();
 
     let (large_punish, small_punish, bursts) = match rates.as_slice() {
       &[rate] if rate > 0.0 => { (60000.0 / rate, 60000.0 / rate, 1f32) }
