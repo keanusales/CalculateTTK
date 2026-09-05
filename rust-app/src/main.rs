@@ -149,9 +149,9 @@ fn main() {
     let (large_punish, small_punish, bursts) = match rates.as_slice() {
       &[rate] if rate > 0.0 => { (60000.0 / rate, 60000.0 / rate, 1f32) }
       &[rate, punish, bursts] if (
-        rate > 0.0 && punish > 0.0 && bursts > 1.0 && (60000.0 * bursts / rate) > punish
+        rate > 0.0 && punish > 0.0 && bursts > 1.0 && 60000.0 * bursts / rate > punish
       ) => {
-        (punish, ((60000.0 * bursts / rate) - punish) / (bursts - 1.0), bursts)
+        (punish, (60000.0 * bursts / rate - punish) / (bursts - 1.0), bursts)
       }
       _ => { let _ = rate_input.take_focus(); return; }
     };
