@@ -1,0 +1,24 @@
+[package]
+name = "delta_ttk"
+version = "1.0.0"
+edition = "2024"
+
+[dependencies]
+fltk = {
+  version = "^1.5",
+  features = [
+    "use-wayland",
+    "use-ninja"
+  ]
+}
+regex-lite = "^0.1.9"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
