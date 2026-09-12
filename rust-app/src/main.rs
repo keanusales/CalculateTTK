@@ -34,15 +34,14 @@ fn validate_input(input: &mut Input, re: Regex) {
     } else {
       let pos = (input.position() - 1).max(0);
       input.set_value(&last_valid);
-      let _ = input.set_position(pos);
+      drop(input.set_position(pos));
     }
   });
 }
 
-fn parse_sequence(value: &str, tresh: f32) -> Vec<f32> {
+fn parse_sequence(value: &str) -> Vec<f32> {
   value.replace(",", ".").split_whitespace().filter(|s| *s != ".")
-    .filter_map(|s| s.parse::<f32>().ok())
-    .filter(|v| *v > tresh).collect()
+    .filter_map(|s| s.parse::<f32>().ok()).collect()
 }
 
 fn main() {
@@ -89,13 +88,13 @@ fn main() {
           Key::Down if let Some(target) = next.as_mut() => {
             target.set_value(&current.value());
             target.do_callback();
-            let _ = target.take_focus();
+            drop(target.take_focus());
             return true;
           }
           Key::Up if let Some(target) = prev.as_mut() => {
             target.set_value(&current.value());
             target.do_callback();
-            let _ = target.take_focus();
+            drop(target.take_focus());
             return true;
           }
           _ => {}
@@ -154,7 +153,7 @@ fn main() {
 
     for (input, damage) in damage_inputs.iter_mut().zip(&mut damages) {
       let value = input.value();
-      if value.is_empty() { let _ = input.take_focus(); return; }
+      if value.is_empty() { drop(input.take_focus()); return; }
 
       let s: String = value.chars().filter_map(|c| match c
         { ' ' => None, ',' => Some('.'), _ => Some(c) }).collect();
@@ -166,28 +165,30 @@ fn main() {
         s.parse::<f32>().unwrap_or(0.0)
       };
 
-      if *damage <= 0.0 { let _ = input.take_focus(); return; }
+      if *damage <= 0.0 { drop(input.take_focus()); return; }
     }
 
     let drop_value = drop_input.value();
-    if drop_value.is_empty() { let _ = drop_input.take_focus(); return; }
+    if drop_value.is_empty() { drop(drop_input.take_focus()); return; }
 
-    let drops = parse_sequence(&drop_value, 0.0);
-    if drops.is_empty() { let _ = drop_input.take_focus(); return; }
+    let drops = parse_sequence(&drop_value);
+    if !drops.iter().all(|v| *v > 0.0) { drop(drop_input.take_focus()); return; }
 
     let rate_value = rate_input.value();
-    if rate_value.is_empty() { let _ = rate_input.take_focus(); return; }
+    if rate_value.is_empty() { drop(rate_input.take_focus()); return; }
 
-    let rates = parse_sequence(&rate_value, 1.0);
-
+    let rates = parse_sequence(&rate_value);
     let (small_punish, large_punish, bursts) = match rates.as_slice() {
-      &[rate] => (60000.0 / rate, 60000.0 / rate, 1.0),
-      &[rate, punish, bursts] if 60000.0 * bursts / rate > punish => (
+      &[rate] if rate > 0.0 => (60000.0 / rate, 60000.0 / rate, 1.0),
+      &[rate, punish, bursts] if (
+        rate > 0.0 && punish > 0.0 && bursts > 1.0
+        && 60000.0 * bursts / rate > punish
+      ) => (
         (60000.0 * bursts / rate - punish) / (bursts - 1.0), punish, bursts
       ),
-      _ => { let _ = rate_input.take_focus(); return; }
+      _ => { drop(rate_input.take_focus()); return; }
     };
-    
+
     let (rows, cols) = (damages.len() + 1, drops.len() + 1);
     let mut table_data = Vec::<String>::with_capacity(rows * cols);
 
@@ -233,7 +234,7 @@ fn main() {
     window.set_size(PAD_A + RES_X + width, WIN_H.max(2 * PAD_A + height));
     result.resize(RES_X, PAD_A, width, height);
 
-    let _ = damage_inputs[0].take_focus();
+    drop(damage_inputs[0].take_focus());
   });
 
   delta_app.run().unwrap();
