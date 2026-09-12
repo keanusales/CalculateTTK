@@ -40,7 +40,7 @@ fn validate_input(input: &mut Input, re: Regex) {
 }
 
 fn parse_sequence(value: &str) -> Vec<f32> {
-  value.replace(",", ".").split_whitespace().filter(|s| *s != ".")
+  value.replace(",", ".").split_whitespace().filter(|&s| s != ".")
     .filter_map(|s| s.parse::<f32>().ok()).collect()
 }
 
@@ -172,7 +172,7 @@ fn main() {
     if drop_value.is_empty() { drop(drop_input.take_focus()); return; }
 
     let drops = parse_sequence(&drop_value);
-    if !drops.iter().all(|v| *v > 0.0) { drop(drop_input.take_focus()); return; }
+    if !drops.iter().all(|&v| v > 0.0) { drop(drop_input.take_focus()); return; }
 
     let rate_value = rate_input.value();
     if rate_value.is_empty() { drop(rate_input.take_focus()); return; }
