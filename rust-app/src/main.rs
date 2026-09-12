@@ -16,6 +16,7 @@ const ROW_H: i32 = 25;
 const LBL_W: i32 = 235;
 const WIDTH: i32 = 110;
 const HEIGHT: i32 = 30;
+const MAX_INPUT_SIZE: i32 = 40;
 
 const BOX_W: i32 = WIDTH + 10;
 const INP_X: i32 = 2 * PAD_A + LBL_W;
@@ -58,18 +59,18 @@ fn main() {
   let rate_re = Regex::new(r"^(\d+[.,]?\d* ?){1,2}\d*$").unwrap();
 
   let mut row_px = PAD_A;
-
   let mut damage_inputs = PARTS.map(|part| {
     let mut frame = Frame::default()
       .with_label(&format!("Damage value for {part}:"))
       .with_size(LBL_W, ROW_H).with_pos(PAD_A, row_px);
     frame.set_align(Align::Center | Align::Inside);
 
-    let mut input = Input::default()
+    let mut damage_input = Input::default()
       .with_size(WIDTH, ROW_H).with_pos(INP_X, row_px);
-    validate_input(&mut input, damage_re.clone());
+    damage_input.set_maximum_size(MAX_INPUT_SIZE);
+    validate_input(&mut damage_input, damage_re.clone());
     row_px += HEIGHT;
-    input
+    damage_input
   });
 
   for (i, input) in damage_inputs.iter().enumerate() {
@@ -111,6 +112,7 @@ fn main() {
 
   let mut drop_input = Input::default()
     .with_size(WIDTH, ROW_H).with_pos(INP_X, row_px);
+  drop_input.set_maximum_size(MAX_INPUT_SIZE);
   validate_input(&mut drop_input, drop_re);
   row_px += HEIGHT;
 
@@ -121,6 +123,7 @@ fn main() {
 
   let mut rate_input = Input::default()
     .with_size(WIDTH, ROW_H).with_pos(INP_X, row_px);
+  rate_input.set_maximum_size(MAX_INPUT_SIZE);
   validate_input(&mut rate_input, rate_re);
   row_px += HEIGHT;
 
