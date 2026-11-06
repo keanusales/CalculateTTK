@@ -20,6 +20,10 @@ update:
 	@echo "Atualizando dependências..."
 	cargo update && cargo clean
 
+move:
+	@echo "Movendo binário para ~/delta_ttk/delta_ttk..."
+	mv ./target/x86_64-unknown-linux-gnu/release/delta_ttk ~/delta_ttk/delta_ttk
+
 clean:
 	@echo "Limpando artefatos..."
 	cargo clean
