@@ -6,9 +6,10 @@ export CFLAGS = $(OPT_FLAGS)
 export CXXFLAGS = $(OPT_FLAGS)
 export CFLTK_WAYLAND_ONLY = 1
 
-.PHONY: all release update clean
+.PHONY: all release update move clean clear
 
 all: release
+clear: clean
 
 release:
 	@echo "Iniciando compilação release..."
