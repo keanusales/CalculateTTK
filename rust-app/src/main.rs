@@ -24,16 +24,15 @@ const RES_X: i32 = WIN_W + PAD_A;
 
 const GRAPH_HEIGHT: i32 = 300;
 const GRAPH_PAD_X: i32 = 55;
-const GRAPH_PAD_Y: i32 = 35;
+const GRAPH_PAD_Y: i32 = 25;
 const GRAPH_RIGHT_PAD: i32 = 15;
-const GRAPH_BOTTOM_PAD: i32 = 20;
+const GRAPH_UPPER_PAD: i32 = 15;
 
-const LABEL_HEIGHT: i32 = 20;
 const LABEL_WIDTH: i32 = 40;
-
+const LABEL_HEIGHT: i32 = 20;
 const TTK_LINE_WIDTH: i32 = 2;
 const GRID_LINE_WIDTH: i32 = 1;
-const GRID_STEPS_Y: i32 = 5;
+const GRIDY_STEPS: i32 = 5;
 
 const PARTS: [&str; PARTS_LEN] = [
   "Head", "Chest", "Belly", "Arms", "Forearms", "Thighs", "Legs"
@@ -41,7 +40,7 @@ const PARTS: [&str; PARTS_LEN] = [
 
 const COLORS: [Color; PARTS_LEN] = [
   Color::Red, Color::Green, Color::Blue, Color::Magenta,
-  Color::Cyan, Color::DarkYellow, Color::Black
+  Color::Cyan, Color::Yellow, Color::Black
 ];
 
 fn validate_input(input: &mut Input, re: Regex) {
@@ -332,7 +331,7 @@ fn main() {
         frame.x(), frame.y(), frame.w(), frame.h(), Color::Dark1);
 
       let graph_w = frame.w() - GRAPH_PAD_X - GRAPH_RIGHT_PAD;
-      let graph_h = frame.h() - GRAPH_PAD_Y - GRAPH_BOTTOM_PAD;
+      let graph_h = frame.h() - GRAPH_PAD_Y - GRAPH_UPPER_PAD;
       let graph_x = frame.x() + GRAPH_PAD_X;
       let graph_y = frame.y() + frame.h() - GRAPH_PAD_Y;
 
@@ -341,22 +340,23 @@ fn main() {
 
       draw::set_line_style(draw::LineStyle::Dot, GRID_LINE_WIDTH);
 
-      for i in 0..=GRID_STEPS_Y {
-        let value = max_ttk * (i as f32 / GRID_STEPS_Y as f32);
+      for i in 0..=GRIDY_STEPS {
+        let value = max_ttk * (i as f32 / GRIDY_STEPS as f32);
         let pixel = graph_y - (value * scale_y) as i32;
 
         draw::set_draw_color(Color::Dark3);
         draw::draw_line(graph_x, pixel, graph_x + graph_w, pixel);
+        let sub_factor = (GRIDY_STEPS - i) * LABEL_HEIGHT / GRIDY_STEPS;
 
         draw::set_draw_color(Color::Black);
         draw::draw_text2(&format!("{value:.0}ms"),
-          frame.x(), pixel - LABEL_HEIGHT / 2, GRAPH_PAD_X - 5, LABEL_HEIGHT,
+          frame.x(), pixel - sub_factor, GRAPH_PAD_X - 5, LABEL_HEIGHT,
           Align::Right | Align::Inside);
       }
 
-      let grid_steps_x = (cols * 2) as i32;
-      for i in 0..=grid_steps_x {
-        let value = max_dist * (i as f32 / grid_steps_x as f32);
+      let gridx_steps = (cols * 2) as i32;
+      for i in 0..=gridx_steps {
+        let value = max_dist * (i as f32 / gridx_steps as f32);
         let pixel = graph_x + (value * scale_x) as i32;
 
         draw::set_draw_color(Color::Dark3);
@@ -364,8 +364,8 @@ fn main() {
 
         draw::set_draw_color(Color::Black);
         draw::draw_text2(&format!("{value:.0}m"),
-          pixel - LABEL_HEIGHT, graph_y + 5, LABEL_WIDTH, LABEL_HEIGHT,
-          Align::Left | Align::Inside);
+          pixel - LABEL_WIDTH, graph_y, LABEL_WIDTH, LABEL_HEIGHT,
+          Align::Right | Align::Inside);
       }
 
       for part in 0..PARTS_LEN {
