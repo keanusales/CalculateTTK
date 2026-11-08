@@ -311,15 +311,12 @@ fn main() {
     let graph_iy = PAD_A + table_h + PAD_A;
 
     let slope = 1000.0 / velocity;
-    let mut max_dist = dists.last().unwrap_or(&100.0) * 1.2;
+    let max_dist = dists.last().unwrap_or(&100.0).max(100.0);
 
-    let mut max_ttk = part_ttks.chunks(drops.len())
+    let max_ttk = part_ttks.chunks(drops.len())
       .filter_map(|chunk| chunk.last())
       .map(|&b_last| slope * max_dist + b_last)
-      .fold(0.0, f32::max);
-
-    if max_ttk <= 0.0 { max_ttk = 100.0; }
-    if max_dist <= 0.0 { max_dist = 100.0; }
+      .fold(0.0, f32::max).max(100.0);
 
     end_graph.draw(move |frame| {
       draw::push_clip(frame.x(), frame.y(), frame.w(), frame.h());
