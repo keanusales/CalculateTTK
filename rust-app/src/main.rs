@@ -339,11 +339,12 @@ fn main() {
       let scale_x = graph_w as f32 / max_dist;
       let scale_y = graph_h as f32 / max_ttk;
 
+      draw::set_line_style(draw::LineStyle::Dot, GRID_LINE_WIDTH);
+
       for i in 0..=GRID_STEPS_Y {
         let value = max_ttk * (i as f32 / GRID_STEPS_Y as f32);
         let pixel = graph_y - (value * scale_y) as i32;
 
-        draw::set_line_style(draw::LineStyle::Dot, GRID_LINE_WIDTH);
         draw::set_draw_color(Color::Dark3);
         draw::draw_line(graph_x, pixel, graph_x + graph_w, pixel);
 
@@ -358,7 +359,6 @@ fn main() {
         let value = max_dist * (i as f32 / grid_steps_x as f32);
         let pixel = graph_x + (value * scale_x) as i32;
 
-        draw::set_line_style(draw::LineStyle::Dot, GRID_LINE_WIDTH);
         draw::set_draw_color(Color::Dark3);
         draw::draw_line(pixel, graph_y, pixel, graph_y - graph_h);
 
@@ -390,7 +390,7 @@ fn main() {
 
           if let Some(&b_next) = ttks.get(i + 1) {
             let y_jump = slope * dist_end + b_next;
-            let py3 = graph_y - ((y_jump / max_ttk) * graph_h as f32) as i32;
+            let py3 = graph_y - (y_jump * scale_y) as i32;
 
             draw::set_line_style(draw::LineStyle::Dot, TTK_LINE_WIDTH);
             draw::draw_line(px2, py2, px2, py3);
