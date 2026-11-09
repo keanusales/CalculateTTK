@@ -365,12 +365,11 @@ fn main() {
           Align::Right | Align::Inside);
       }
 
-      for part in 0..PARTS_LEN {
+      for (part, ttks) in part_ttks.chunks(drops.len()).enumerate() {
         if damages[..part].contains(&damages[part]) { continue; }
 
-        draw::set_line_style(draw::LineStyle::Solid, TTK_LINE_WIDTH);
         draw::set_draw_color(COLORS[part]);
-        let ttks = &part_ttks[part * drops.len() .. (part + 1) * drops.len()];
+        draw::set_line_style(draw::LineStyle::Solid, TTK_LINE_WIDTH);
 
         for (i, (&dist_init, &b)) in dists.iter().zip(ttks).enumerate() {
           let &dist_end = dists.get(i + 1).unwrap_or(&max_dist);
