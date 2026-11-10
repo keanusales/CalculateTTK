@@ -262,7 +262,9 @@ fn main() {
     }
 
     let last = drops.len() - 1;
-    table_data.push(format!("{}+m {}x", dists[last], drops[last]));
+    let last_dist = unsafe { dists.get_unchecked(last) };
+    let last_drop = unsafe { drops.get_unchecked(last) };
+    table_data.push(format!("{last_dist}+m {last_drop}x"));
 
     let mut part_ttks = Vec::<f32>::with_capacity(PARTS_LEN * drops.len());
 
@@ -298,7 +300,8 @@ fn main() {
         draw::set_font(Font::Helvetica, 14);
         draw::set_draw_color(Color::Black);
 
-        let data = &table_data[r as usize * cols + c as usize];
+        let index = r as usize * cols + c as usize;
+        let data = unsafe { table_data.get_unchecked(index) };
         draw::draw_text2(data, x, y, w, h, Align::Center | Align::Inside);
         draw::pop_clip();
       }
@@ -311,7 +314,7 @@ fn main() {
     let graph_iy = PAD_A + table_h + PAD_A;
 
     let slope = 1000.0 / velocity;
-    let max_dist = (dists[last] * 1.2).max(100.0);
+    let max_dist = (last_dist * 1.2).max(100.0);
 
     let max_ttk = part_ttks.chunks(drops.len())
       .filter_map(|chunk| chunk.last())
