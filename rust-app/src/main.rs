@@ -106,9 +106,7 @@ fn main() {
       Some(damage_inputs[i - 1].clone())
     } else { None };
 
-    let mut next = if i + 1 < damage_inputs.len() {
-      Some(damage_inputs[i + 1].clone())
-    } else { None };
+    let mut next = damage_inputs.get(i + 1).cloned();
 
     let mut current = input.clone();
     current.handle(move |current, event| {
