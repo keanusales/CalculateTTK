@@ -20,8 +20,8 @@ release:
 	cargo clean && \
 	cargo build --release --target x86_64-unknown-linux-gnu && \
 	strip --strip-all -R .comment -R .gnu.build.attributes \
-		-R .annobin.notes -R .note.stapsdt -R .note.gnu.build-id \
-		$(TARGET_BIN)
+	-R .annobin.notes -R .note.stapsdt -R .note.gnu.build-id \
+	$(TARGET_BIN)
 
 update:
 	@echo "Atualizando dependências..."
