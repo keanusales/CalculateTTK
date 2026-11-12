@@ -1,6 +1,10 @@
-OPT_FLAGS = -Oz -flto=full -fdata-sections -ffunction-sections -fvisibility=hidden -fno-plt \
-            -fvisibility-inlines-hidden -fno-semantic-interposition -fomit-frame-pointer \
-            -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables
+OPT_FLAGS = -Oz -flto=full -DNDEBUG -fdata-sections -ffunction-sections \
+            -fvisibility=hidden -fvisibility-inlines-hidden -fno-plt \
+            -fno-unwind-tables -fno-asynchronous-unwind-tables \
+            -fno-semantic-interposition -fomit-frame-pointer \
+            -fmerge-all-constants -fno-exceptions
+
+TARGET_BIN = ./target/x86_64-unknown-linux-gnu/release/delta_ttk
 
 export CFLAGS = $(OPT_FLAGS)
 export CXXFLAGS = $(OPT_FLAGS)
@@ -15,7 +19,9 @@ release:
 	@echo "Iniciando compilação release..."
 	cargo clean && \
 	cargo build --release --target x86_64-unknown-linux-gnu && \
-	strip ./target/x86_64-unknown-linux-gnu/release/delta_ttk
+	strip --strip-all -R .comment -R .gnu.build.attributes \
+		-R .annobin.notes -R .note.stapsdt -R .note.gnu.build-id \
+		$(TARGET_BIN)
 
 update:
 	@echo "Atualizando dependências..."
@@ -23,7 +29,7 @@ update:
 
 move:
 	@echo "Movendo binário para ~/delta_ttk/delta_ttk..."
-	mv ./target/x86_64-unknown-linux-gnu/release/delta_ttk ~/delta_ttk/delta_ttk
+	mv $(TARGET_BIN) ~/delta_ttk/delta_ttk
 
 clean:
 	@echo "Limpando artefatos..."
