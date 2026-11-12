@@ -106,14 +106,14 @@ fn main() {
     damage_input
   });
 
-  for (i, input) in damage_inputs.iter().enumerate() {
+  for i in 0..damage_inputs.len() {
     let mut prev = if i > 0 {
       Some(damage_inputs[i - 1].clone())
     } else { None };
 
     let mut next = damage_inputs.get(i + 1).cloned();
 
-    let mut current = input.clone();
+    let mut current = damage_inputs[i].clone();
     current.handle(move |current, event| {
       if event == Event::KeyDown {
         match app::event_key() {
