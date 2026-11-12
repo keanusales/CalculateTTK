@@ -5,6 +5,7 @@ use fltk::{
   enums::{Align, Color, Event, Font, FrameType, Key, CallbackTrigger},
   table::{TableRow, TableContext}, draw, prelude::*
 };
+use std::array::from_fn;
 use regex_lite::Regex;
 
 const PARTS_LEN: usize = 7;
@@ -63,6 +64,10 @@ fn parse_sequence(value: &str) -> Vec<f32> {
     .split_whitespace().filter(|&s| s != ".")
     .filter_map(|s| s.parse::<f32>().ok())
     .collect()
+}
+
+fn parse_unique(value: &str) -> f32 {
+  value.replace(",", ".").parse::<f32>().unwrap_or(0.0)
 }
 
 macro_rules! invalid_input {
@@ -201,52 +206,48 @@ fn main() {
   window.end(); window.show();
 
   button.set_callback(move |_| {
-    let mut damages = [0.0; PARTS_LEN];
+    let damages: [f32; PARTS_LEN] = from_fn(|index| {
+      let value = damage_inputs[index].value();
+      if value.is_empty() { return 0.0; }
 
-    for (input, damage) in damage_inputs.iter_mut().zip(&mut damages) {
-      let value = input.value();
-      if value.is_empty() { invalid_input!(input); }
-
-      let s: String = value.chars().filter_map(|c| match c
+      let value: String = value.chars().filter_map(|c| match c
         { ' ' => None, ',' => Some('.'), _ => Some(c) }).collect();
-      let s = s.trim_end_matches(['.', '*']);
 
-      *damage = if let Some((a, b)) = s.split_once('*') {
-        a.parse::<f32>().unwrap_or(0.0) * b.parse::<f32>().unwrap_or(0.0)
-      } else {
-        s.parse::<f32>().unwrap_or(0.0)
-      };
+      value.trim_end_matches(['.', '*']).split('*')
+        .map(|s| s.parse::<f32>().unwrap_or(0.0)).product()
+    });
 
-      if *damage <= 0.0 { invalid_input!(input); }
+    for (input, &damage) in damage_inputs.iter_mut().zip(&damages) {
+      if damage <= 0.0 { invalid_input!(input); }
     }
 
     let drop_value = drop_input.value();
-    if drop_value.is_empty() { invalid_input!(drop_input); }
-
-    let drops = parse_sequence(&drop_value);
-    if !drops.iter().all(|&v| v > 0.0) { invalid_input!(drop_input); }
-
     let dist_value = dist_input.value();
-    let mut dists = parse_sequence(&dist_value);
-    dists.insert(0, 0.0);
-
-    if dists.len() != drops.len() { invalid_input!(dist_input); }
-
-    let velocity = veloc_input.value()
-      .replace(",", ".").parse::<f32>().unwrap_or(0.0);
-    if velocity <= 0.0 { invalid_input!(veloc_input); }
-
+    let veloc_value = veloc_input.value();
     let rate_value = rate_input.value();
+
+    if drop_value.is_empty() { invalid_input!(drop_input); }
+    if veloc_value.is_empty() { invalid_input!(veloc_input); }
     if rate_value.is_empty() { invalid_input!(rate_input); }
 
+    let drops = parse_sequence(&drop_value);
+    let mut dists = parse_sequence(&dist_value);
+    let velocity = parse_unique(&veloc_value);
     let rates = parse_sequence(&rate_value);
+    dists.insert(0, 0.0);
+
+    if drops.iter().any(|&v| v <= 0.0) { invalid_input!(drop_input); }
+    if dists.len() != drops.len() { invalid_input!(dist_input); }
+    if velocity <= 0.0 { invalid_input!(veloc_input); }
+
     let (small_punish, large_punish, bursts) = match rates.as_slice() {
       &[rate] if rate > 0.0 => (60000.0 / rate, 60000.0 / rate, 1.0),
       &[rate, punish, bursts] if (
         rate > 0.0 && punish > 0.0 && bursts > 1.0
         && 60000.0 * bursts / rate > punish
       ) => (
-        (60000.0 * bursts / rate - punish) / (bursts - 1.0), punish, bursts
+        (60000.0 * bursts / rate - punish) / (bursts - 1.0),
+        punish, bursts
       ),
       _ => { invalid_input!(rate_input); }
     };
@@ -309,9 +310,8 @@ fn main() {
     let table_h = rows as i32 * HEIGHT + 4;
     end_table.resize(RES_X, PAD_A, table_w, table_h);
 
-    let graph_iy = PAD_A + table_h + PAD_A;
-
     let slope = 1000.0 / velocity;
+    let graph_iy = PAD_A + table_h + PAD_A;
     let max_dist = (last_dist * 1.2).max(100.0);
 
     let max_ttk = part_ttks.chunks(drops.len())
