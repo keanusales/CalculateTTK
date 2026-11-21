@@ -1,0 +1,43 @@
+[target.x86_64-pc-windows-msvc]
+linker = "lld-link"
+rustflags = [
+  "-C", "lto=fat",
+  "-C", "linker-plugin-lto",
+  "-C", "force-frame-pointers=no",
+  "-C", "link-arg=/OPT:REF",
+  "-C", "link-arg=/OPT:ICF",
+  "-C", "link-arg=/OPT:LLDLTO=2",
+  "-C", "link-arg=-opt:lldltocgo=2",
+]
+
+[target.x86_64-pc-windows-msvc.env]
+CC = "clang-cl"
+CXX = "clang-cl"
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = [
+  "-C", "lto=fat",
+  "-C", "linker-plugin-lto",
+  "-C", "force-unwind-tables=no",
+  "-C", "force-frame-pointers=no",
+  "-C", "link-arg=-fuse-ld=lld",
+  "-C", "link-arg=-Wl,-O2",
+  "-C", "link-arg=-Wl,--lto-O2",
+  "-C", "link-arg=-Wl,--lto-CGO2",
+  "-C", "link-arg=-Wl,--gc-sections",
+  "-C", "link-arg=-Wl,--icf=all",
+  "-C", "link-arg=-Wl,-z,pack-relative-relocs",
+  "-C", "llvm-args=-enable-machine-outliner=always",
+  "-C", "link-arg=-Wl,--no-eh-frame-hdr",
+  "-C", "link-arg=-Wl,--build-id=none",
+  "-C", "link-arg=-Wl,--as-needed",
+  "-C", "link-arg=-Wl,--exclude-libs=ALL",
+  "-Z", "split-lto-unit",
+  "-Z", "virtual-function-elimination",
+  "-Z", "location-detail=none"
+]
+
+[target.x86_64-unknown-linux-gnu.env]
+CC = "clang"
+CXX = "clang++"

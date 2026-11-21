@@ -1,0 +1,5 @@
+# Arquivos de compilação e artefatos gerados
+/target/
+*.ico
+*.png
+*.svg
