@@ -27,15 +27,18 @@ rustflags = [
   "-C", "link-arg=-Wl,--lto-CGO2",
   "-C", "link-arg=-Wl,--gc-sections",
   "-C", "link-arg=-Wl,--icf=all",
+  "-C", "link-arg=-Wl,--pack-dyn-relocs=relr",
   "-C", "link-arg=-Wl,-z,pack-relative-relocs",
   "-C", "llvm-args=-enable-machine-outliner=always",
+  "-C", "link-arg=-Wl,-z,noseparate-code",
   "-C", "link-arg=-Wl,--no-eh-frame-hdr",
   "-C", "link-arg=-Wl,--build-id=none",
   "-C", "link-arg=-Wl,--as-needed",
   "-C", "link-arg=-Wl,--exclude-libs=ALL",
-  "-Z", "split-lto-unit",
   "-Z", "virtual-function-elimination",
-  "-Z", "location-detail=none"
+  "-Z", "location-detail=none",
+  "-Z", "split-lto-unit",
+  "-Z", "fmt-debug=none"
 ]
 
 [target.x86_64-unknown-linux-gnu.env]
