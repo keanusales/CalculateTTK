@@ -122,7 +122,7 @@ fn main() {
   let mut drop_input = form.add("Damage drops (space separated):", drop_re);
   let mut dist_input = form.add("Distances for drops (m):", dist_re);
   let mut veloc_input = form.add("Bullet Velocity (m/s):", veloc_re);
-  let mut rate_input = form.add("Rate of Fire [Interval] [Bursts]:", rate_re);
+  let mut rate_input = form.add("Fire Rate [Interval] [Bursts]:", rate_re);
 
   let mut button = Button::default()
     .with_label("Calculate TTK and Plot Graph")
@@ -342,7 +342,8 @@ fn main() {
 
       for (part, ttks) in part_ttks.chunks_exact(drops.len()).enumerate() {
         let this_damage = damages.get_unchecked(part);
-        if damages[..part].contains(this_damage) { continue; }
+        let other_damages = damages.get_unchecked(..part);
+        if other_damages.contains(this_damage) { continue; }
 
         draw::set_draw_color(*COLORS.get_unchecked(part));
         draw::set_line_style(draw::LineStyle::Solid, TTK_LINE_WIDTH);
